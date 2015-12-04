@@ -1,9 +1,9 @@
 import logging
+from itertools import cycle
 from enum import Enum
-
-import numpy as np
 from typing import Callable, Iterable, Union
-
+import numpy as np
+from numpy.random import rand
 from .core import Classifier
 
 logger = logging.getLogger(__name__)
@@ -36,25 +36,25 @@ class TrainingRule(str, Enum):
 
 
 class Perceptron(Classifier):
-    def __init__(self, rule: TrainingRule = "fixed", strategy: Strategy = "rest", **kwargs):
+    def __init__(self, rule: TrainingRule = "fixed",
+                 strategy: Strategy = "rest",
+                 learn_rate: LearningRate = None,
+                 **kwargs):
         super().__init__(**kwargs)
         self.strategy = Strategy(strategy)
         self.rule = TrainingRule(rule)
+        self.learning_rate = make_learning_rate() if learn_rate is None else learn_rate
 
         # Training data placeholders
         self.discriminants = {}
-        self.learning_rate = make_learning_rate()
 
     def train(self, samples: narray, labels: narray, **kwargs):
+        args = {'rate': self.learning_rate}
+
         for i, label in enumerate(np.unique(labels)):
-            self.discriminants[label] = fixed_increment(normalize_features(label, samples, labels))
+            normalized = normalize_features(label, samples, labels)
+            self.discriminants[label] = self.rule.method(normalized, **args)
             logger.info("Weights after training for class %s: %r" % (label, self.discriminants[label]))
-
-    def fixed(self, samples: narray, labels: narray) -> np.array:
-        self.weights = []
-
-        for i in range(self.labels.shape[0]):
-            print(i)
 
     def test(self, samples: narray, labels: narray, **kwargs):
         """
@@ -107,16 +107,15 @@ def normalize_features(cls: int, samples: narray, labels: narray, weight: float 
     return result
 
 
-def fixed_increment(samples: narray, rate: float = 1) -> np.array:
+def fixed_increment(samples: narray, **kwargs) -> np.array:
     """
     Fixed-Increment Single-Sample Perceptron rule (Algorithm 5.4 from the Duda book).
     :param samples: Normalized augmented features for training
-    :param rate: The learning rate
+    :param kwargs:
     :return: The trained weights.
     """
     (n, features) = samples.shape
-    weights = np.ones((features,))
-    old_weights = np.copy(weights)
+    weights = np.random.rand(features,1).reshape((features,))
     trial = 0
 
     while True:
@@ -128,67 +127,55 @@ def fixed_increment(samples: narray, rate: float = 1) -> np.array:
             correct = (y[0] > 0 and net >= 0) or (y[0] < 0 and net < 0)
 
             if not correct:
-                # print("ERROR %i ==========================" % errors)
-                # print("\tnet is %f and label is %f. error? %s" % (net, y[0], correct == False))
-                # print("\tgot weights: %s" % weights)
-                # print("\tgot samp: %s" % y)
-                # print("\tw + y == %s" % (weights + y))
                 weights += y
-                # print("\tnow weights: %s" % weights)
-                # print("\tnow samp: %s" % y)
                 errors += 1
 
         if errors == 0:
             break
 
-        if True:
-            # if trial == 1 or trial % 500 == 0:
-            print("Trial %i (%i misclassifications)\n\told: %s\n\tnew: %s\n\tdelta: %s" % (
-            trial, errors, old_weights, weights, (old_weights - weights)))
+        if trial == 1 or trial % 500 == 0:
             old_weights = np.copy(weights)
-
-            # print("Trial %i: Errors: %i weights: %r" % (trials, errors, weights))
 
     print("Completed training after %i trials." % trial)
     return weights
 
 
-def batch_relaxation(samples: narray, labels: narray, rate: LearningRate, b: float = 0,
-                     weights: narray = None) -> np.array:
+def batch_relaxation(samples: narray, rate: LearningRate, margin: float = 0.01, **kwargs) -> np.array:
     """
     Batch Relaxation with Margin Perceptron rule (Algorithm 5.8 from the Duda book).
     :param samples: Samples to use for training.
-    :param labels: The corresponding labels for samples.
     :param rate: The learning rate.
-    :param b:
-    :param weights: Initial set of weights to use (default = identity matrix)
+    :param margin: Margin specifying plane such that: dot(weights.T, y) >= margin
+    :param kwargs:
     :return: The weights after training.
     """
-    pass
-    if weights is None:
-        weights = np.ones((samples.shape[-1],))
+    if not (0 < margin < 2):
+        raise ValueError("Margin must be in the range (0,2), got %f" % margin)
+    (n, features) = samples.shape
+    weights = np.random.rand(features,1).reshape((features,))
+    trial = 0
 
-    n = samples.shape[0]
-    k = 0
-    iterations = 0
-
-    while True:
-        iterations += 1
-        mistakes = []
+    for k in cycle(range(n)):
+        errors = []
 
         # Attempt classification
         for y in samples:
             net = np.dot(weights.T, y)
-            if net <= b:
-                mistakes.append(y)
 
-        # Update weights
-        error = np.sum([y * (b - np.dot(weights.T, y)) / np.sum(y ** 2) for y in mistakes])
-        weights = weights + rate(k) * error
-        k = (k + 1) % n
+            if net <= margin or np.allclose(net, margin):
+                print("got error for value %f (label: %f)" % (net, y[0]))
+                errors.append(np.copy(y))
 
         # Terminate on convergence
-        if len(mistakes) == 0:
+        if len(errors) == 0:
             break
+
+        # Update weights
+        correction = np.sum([x * (margin - np.dot(weights.T, x)) / np.linalg.norm(x) ** 2 for x in errors], axis=0)
+        weights = weights + rate(k) * correction
+
+        logger.info(
+            "Finished trial %i with %i errors (weights: %s) correction: %s" % (trial, len(errors), weights, correction))
+        trial += 1
 
     return weights

@@ -38,6 +38,6 @@ if __name__ == '__main__':
 
     if args.prompt and args.method is None:
         print("Choose a classification method, options are:\n\t - %s" % '\n\t - '.join(proj2.METHODS))
-        method = input("Method: ")
-    else:
-        proj2.run(**vars(args))
+        args.method = input("Method: ")
+
+    proj2.run(**vars(args))
