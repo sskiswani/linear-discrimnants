@@ -8,6 +8,7 @@ from . import util, core
 
 logger = logging.getLogger()
 np.set_printoptions(precision=3, suppress=True, linewidth=180)
+# np.set_printoptions(linewidth=180)
 
 _all_ = [
     'adaboost',
