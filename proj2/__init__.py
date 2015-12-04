@@ -17,12 +17,12 @@ _all_ = [
 
 DEFAULTS = {
     "fixed": {
-        "wine": {"rate":1},
-        "digits": {"rate":1}
+        "wine": {},
+        "digits": {"rate": 1}
     },
     "relax": {
-        "wine": {"rate":1},
-        "digits": {"rate":1}
+        "wine": {"rate": 1},
+        "digits": {"rate": 1}
     },
     "rest": {
         "wine": {},

@@ -100,15 +100,11 @@ def make_learning_rate(rate: float = 1) -> float:
 def normalize_features(cls: int, samples: narray, labels: narray, weight: float = 1, negative_weight: float = -1):
     (n, features) = samples.shape
     result = np.ones((n, features + 1))
-
     for i in range(n):
         result[i][1:] = samples[i]
         result[i][0] = weight if labels[i] == cls else negative_weight
-
     return result
 
-score_itr = 0
-scores = [22788, 36093, 35558]
 
 def fixed_increment(samples: narray, **kwargs) -> np.array:
     """
@@ -125,22 +121,23 @@ def fixed_increment(samples: narray, **kwargs) -> np.array:
 
     while True:
         trial += 1
-        errors = 0
+        errors = []
 
-        for k, y in enumerate(samples):
+        for y in samples:
             net = np.dot(weights.T, y)
             if signum(y[0]) != signum(net):
                 weights = weights + np.sign(y[0]) * y
-                errors += 1
+                errors.append(y)
 
-        if errors == 0:
+        if len(errors) == 0:
             break
 
         if trial % 5000 == 0:
-            print("Trial %i: %i errors" % (trial, errors))
+            print("Trial %i: %i errors" % (trial, len(errors)))
 
     logger.info("Completed training after %i trials." % trial)
     return weights
+
 
 def batch_relaxation(samples: narray, rate: LearningRate, margin: float = 0.01, **kwargs) -> np.array:
     """
