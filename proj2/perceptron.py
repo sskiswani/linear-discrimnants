@@ -30,7 +30,6 @@ class TrainingRule(str, Enum):
             return fixed_increment
         if rule is cls.BatchRelaxation:
             return batch_relaxation
-
         raise KeyError("Unrecognized training rule %s" % rule)
 
 
@@ -47,14 +46,17 @@ class Perceptron(Classifier):
 
     def train(self, samples: narray, labels: narray, **kwargs):
         logger.info("Training using rule %s" % self.rule)
+
         start = time.time()
         for i, label in enumerate(np.unique(labels)):
             begin = time.time()
             normalized = normalize_features(label, samples, labels)
             self.weights[label] = self.rule.method(normalized, debug=True)
             end = time.time()
+
             logger.info("Training for class %s took %.3fs" % (label, (end - begin)))
         end = time.time()
+
         logger.info("Total training time: %.3f" % (end - start))
 
     def test(self, samples: narray, labels: narray, **kwargs):
@@ -62,8 +64,7 @@ class Perceptron(Classifier):
         Test this Perceptron.
         :param samples: Testing samples.
         :param labels: Labels corresponding to testing samples.
-        :param kwargs:
-        :return:
+        :param kwargs: extra arguments
         """
         correct = 0
         for trial, (true, classf) in enumerate(zip(labels, self.iter_classify(samples))):
@@ -75,8 +76,9 @@ class Perceptron(Classifier):
         acc = (correct / total) * 100.0
         print("Got %i correct out of %i (%.2f accuracy)" % (correct, total, acc))
 
+        # Output the weights used
         for label, weight in self.weights.items():
-            print("w[%i] == %s" % (label, weight))
+            print("w[%i] ==\n%s" % (label, weight))
 
     def classify(self, data: narray, debug: bool = False) -> narray:
         return np.array(list(self.iter_classify(data)))
@@ -84,7 +86,7 @@ class Perceptron(Classifier):
     def iter_classify(self, data: narray, debug: bool = False):
         assert hasattr(self, "weights"), "Perceptron must be trained before classification."
         for x in data:
-            values = np.array([[label, np.dot(a[1:].T, x) + a[0]] for label, a in self.weights.items()])
+            values = np.array([[label, np.dot(a[1:], x) + a[0]] for label, a in self.weights.items()])
             best = np.argmax(values[:, 1])
 
             if debug:
@@ -98,27 +100,19 @@ class Perceptron(Classifier):
 
 
 def perceptron_criterion(weights: narray, errors: Iterable[narray]) -> float:
-    result = np.sum([-1 * np.vdot(weights, y) for y in errors])
-    if result < 0:
-        print("wtf criterion is less than zero??")
-    return result
+    return np.sum([-1 * np.vdot(weights, y) for y in errors])
 
 
 def criterion(weights: narray, errors: Iterable[narray], margin: float = 0) -> float:
-    values = np.array([((np.dot(weights.T, y) - margin) / np.linalg.norm(y)) ** 2 for y in errors])
+    values = np.array([((np.dot(weights, y) - margin) / np.linalg.norm(y)) ** 2 for y in errors])
     return 0.5 * np.sum(values)
 
 
 def criterion_gradient(weights: narray, errors: Iterable[narray], b: float = 0) -> float:
-    return np.array([y * (np.dot(weights.T, y) - b) / np.sum(y ** 2) for y in errors])
+    return np.array([y * (np.dot(weights, y) - b) / np.sum(y ** 2) for y in errors])
 
 
 def make_learning_rate(rate: float = 1) -> float:
-    """
-    If the learning rate is too small, convergence occurs slowly.
-    If it's too large,  learning can possible diverge.
-    :param rate:
-    """
     return lambda k: rate
 
 
@@ -179,14 +173,14 @@ def fixed_increment(samples: narray, theta: float = 0.000003, debug: bool = True
         if delta <= theta:
             break
         if debug and trial % 5000 == 0:
-            print("Trial %i: %i errors (best %i) (delta: %f)" % (trial, len(errors), best, delta))
+            logger.debug("Trial %i: %i errors (best %i) (delta: %f)" % (trial, len(errors), best, delta))
 
     logger.info("Completed training after %i trials." % trial)
     return weights
 
 
 def batch_relaxation(samples: narray,
-                     rate: float=0.02,
+                     rate: float = 0.02,
                      margin: float = 1.5,
                      theta: float = 0.001,
                      debug: bool = True,
@@ -195,7 +189,7 @@ def batch_relaxation(samples: narray,
     Batch Relaxation with Margin Perceptron rule (Algorithm 5.8 from the Duda book).
     :param samples: Samples to use for training.
     :param rate: The learning rate
-    :param margin: Margin specifying plane such that: dot(weights.T, y) >= margin
+    :param margin: Margin specifying plane such that: dot(weights, y) >= margin
     :param theta: Stopping threshold
     :param debug: Whether or not to output debugging information
     :param kwargs: Any other arguments
@@ -205,18 +199,11 @@ def batch_relaxation(samples: narray,
         raise ValueError("Rate must be in the range (0,2), got %f" % rate)
     (n, features) = samples.shape
     weights = np.random.rand(features, 1).reshape((features,))
-
-    # TODO: Remove hardcoded rate
-    margin = 1
-
-    def calculate(x: narray, w: narray) -> narray:
-        return x * (margin - np.dot(w, x)) / np.sum(x ** 2)
-
     trial = 0
     best = np.inf
     bd = np.inf
 
-    for k in cycle(range(n)):
+    for _ in cycle(range(n)):
         errors = []
 
         # Attempt classification
@@ -234,24 +221,27 @@ def batch_relaxation(samples: narray,
         old_weights = np.copy(weights)
         weights = weights + update
 
-        # Grab debug values
-        if len(errors) < best:
-            best = len(errors)
+        # Rate limiting
         if trial > 100000:
             break
 
+        # Grab debug values
+        if len(errors) < best:
+            best = len(errors)
         delta = dist(old_weights, weights)
         if delta < bd:
             bd = delta
 
+        # Terminate on small update intervals
         if approx(delta, 0, 0.00001) and approx(criterion(old_weights, errors, margin), 0, 0.00001):
             break
 
+        # Output debug information
         if trial % 5000 == 0:
             if debug:
-                old_crit = criterion(old_weights, errors, margin)
                 crit = criterion(weights, errors, margin)
-                print("Trial %i: %i errors (best %i, best delta: %f) rate %.2f crit: %f" % (trial, len(errors), best, bd, rate, crit))
+                logger.debug("Trial %i: %i errors (best %i, best delta: %f) rate %.2f crit: %f" % (
+                trial, len(errors), best, bd, rate, crit))
 
         trial += 1
 
