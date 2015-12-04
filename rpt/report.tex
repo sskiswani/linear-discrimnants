@@ -87,6 +87,7 @@ For each dataset, train a classifier to classify class 1 against the rest, class
 $\omega_1$ & 22864 & 27.498 \\
 $\omega_2$ & 52918 & 62.130 \\
 $\omega_3$ & 35600 & 127.227\\\hline
+{\bf Total} & & \\\hline
 \end{tabular}
 \end{center}
 
@@ -148,59 +149,72 @@ This resulted in 78 correct classifications out of 89 (87.6\% accuracy).
 
 \bigskip
 \fakesection{Algorithm 5.8 (Batch Relaxation with Margin)}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline\multicolumn{3}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\\hline
+$\omega_1$ & 100000 & 104.886 \\
+$\omega_2$ & 100000 & 146.686 \\
+$\omega_3$ & 100000 & 147.255\\\hline
+{\bf Total} & 300000 & 398.827\\\hline
+\end{tabular}
+\end{center}
+
 After training the perceptron using Algorithm 5.8, the weights were:
 \begin{center}
 \begin{tabular}{ ccc }
 $\mbf{a}_1 = \left[\begin{matrix}
-61035.869 \\ 
--29616.504 \\ 
-21752.882 \\ 
-1483.633 \\
--25062.26 \\ 
-157.921 \\ 
-11769.882 \\ 
-39925.061 \\
--8012.231 \\ 
-32849.055 \\ 
-18856.758 \\ 
--8917.463 \\
-31289.131 \\ 
-568.08
+    0.582 \\
+    -0.213 \\
+    0.487 \\
+    0.728 \\
+    -0.381 \\
+    -0.069 \\
+    0.881 \\
+    0.103 \\
+    0.246 \\
+    0.188 \\
+    0.494 \\
+    0.443 \\
+    0.534 \\
+    0.008
 \end{matrix}\right]$ & 
 $\mbf{a}_2 = \left[\begin{matrix}
-    137199.142 \\
-    37238.975 \\
-    -18303.661 \\
-    6240.703 \\
-    5099.608 \\
-    -3584.203 \\
-    28903.859 \\
-    -3043.506 \\
-    21158.897 \\
-    -25565.128 \\
-    -60256.757 \\
-    34175.689 \\
-    20013.206 \\
-    -55.379 
+    0.539 \\
+    0.306 \\
+    0.402 \\
+    0.633 \\
+    -0.193 \\
+    -0.021 \\
+    0.284 \\
+    0.145 \\
+    0.69  \\
+    0.973 \\
+    -0.288 \\
+    0.054 \\
+    0.657 \\
+    -0.006
 \end{matrix}\right]$ & 
 $\mbf{a}_3 = \left[\begin{matrix}
-    90871.97 \\
-    2481.881 \\
-    -12760.566 \\
-    -7305.273 \\
-    6178.2 \\
-    3980.622 \\
-    -31851.585 \\
-    -51828.543 \\
-    -3346.438 \\
-    -17933.398 \\
-    39059.302 \\
-    -20064.289 \\
-    -62224.546 \\
-    -595.573
+    0.371 \\
+    0.141 \\
+    0.511 \\
+    0.841 \\
+    -0.176 \\
+    -0.042 \\
+    0.062 \\
+    0.114 \\
+    0.545 \\
+    0.337 \\
+    0.601 \\
+    0.142 \\
+    -0.14  \\
+    -0.003
 \end{matrix}\right]$
 \end{tabular}
 \end{center}
+
+This resulted in 83 correct classifications out of 89 (93.26\% accuracy)
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \result{USPS Handwritten Digit Data Set}
