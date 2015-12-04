@@ -1,12 +1,12 @@
 import logging
 from enum import Enum
-
 import numpy as np
-from typing import Callable, Iterable
-
+from typing import Callable, Iterable, Optional
 from .core import Classifier
 
 logger = logging.getLogger(__name__)
+
+LearningRate = Callable[[float], float]
 
 
 class Strategy(str, Enum):
@@ -14,13 +14,13 @@ class Strategy(str, Enum):
     OneAgainstOther = "other"
 
 
-class Rules(str, Enum):
+class TrainingRule(str, Enum):
     FixedIncrement = "fixed"
     BatchRelaxation = "relax"
 
     @property
     def method(self):
-        return Rules.get_method(self)
+        return TrainingRule.get_method(self)
 
     @classmethod
     def get_method(cls, rule):
@@ -33,12 +33,14 @@ class Rules(str, Enum):
 
 
 class Perceptron(Classifier):
-    def __init__(self, rule: Rules = "fixed", strategy: Strategy = "rest", **kwargs):
+    def __init__(self, rule: TrainingRule = "fixed", strategy: Strategy = "rest", **kwargs):
         super().__init__(**kwargs)
         self.strategy = Strategy(strategy)
-        self.rule = Rules(rule)
+        self.rule = TrainingRule(rule)
 
-        # temporary stuff
+        # Training data placeholders
+        self.labels = None
+        self.weights = None
         self.learning_rate = make_learning_rate()
 
     def train(self, samples: np.array, labels: np.array, **kwargs):
@@ -49,13 +51,10 @@ class Perceptron(Classifier):
         :param kwargs:
         :return:
         """
-        if not hasattr(self, "labels"):
-            self.labels = np.unique(labels)
-        if not hasattr(self, "weights"):
-            self.weights = np.ones((samples.shape[-1] + 1))
+        self.labels = np.unique(labels)
 
         # Begin training
-        self.rule.method(self, samples, labels)
+        self.weights = self.rule.method(samples, labels, self.learning_rate)
 
     def test(self, samples: np.array, labels: np.array, **kwargs):
         """
@@ -69,27 +68,19 @@ class Perceptron(Classifier):
 
     def classify(self, data: np.array):
         assert hasattr(self, "weights"), "Perceptron must be trained before classification."
-
-        for i in range(data.shape[0]):
-            sample = data[i]
-            net = np.dot(self.weights[1:, :].T, sample) + self.weights[0]
-            return net
-            # net_j = np.dot(w_ji[1:,:].T, x) + w_ji[0]
-            # y = yfunc(net_j)
+        return
 
     def iter_classify(self, data: np.array):
         pass
 
 
-def criterion(weights: np.array, errors: Iterable, b: float = 0) -> float:
-    dot_weights = lambda y: np.dot(weights[1:].T, y) + weights[0]
-
-    result = np.sum([((dot_weights(y) - b) ** 2) / np.sum(y ** 2) for y in errors])
-    return 0.5 * result
+def criterion(weights: np.ndarray, errors: Iterable[np.ndarray], b: float = 0) -> float:
+    values = [(np.dot(weights.T, y) - b) ** 2 / np.sum(y ** 2) for y in errors]
+    return 0.5 * np.sum(values)
 
 
-def criterion_gradient(weights: np.array, errors: Iterable, margin: float = 0) -> float:
-    pass
+def criterion_gradient(weights: np.ndarray, errors: Iterable[np.ndarray], b: float = 0) -> float:
+    return np.array([y * (np.dot(weights.T, y) - b) / np.sum(y ** 2) for y in errors])
 
 
 def make_learning_rate(rate: float = 1) -> float:
@@ -101,51 +92,63 @@ def make_learning_rate(rate: float = 1) -> float:
     return lambda k: rate
 
 
-def fixed_increment(p: Perceptron, samples: np.array, labels: np.array):
+def fixed_increment(samples: np.array, labels: np.array, rate: LearningRate, weights: np.array = None) -> np.array:
     """
     Fixed-Increment Single-Sample Perceptron rule (Algorithm 5.4 from the Duda book).
-    :param p: The perceptron to train.
     :param samples: Training samples.
     :param labels: Training labels.
-    :return: The training rates.
+    :param rate: Training rate.
+    :param weights:
+    :return:
     """
-    learning = True
     (n, feats) = samples.shape
-    weights = np.ones((feats + 1,))
+    if weights is None:
+        weights = np.ones((feats,))
+
+    learning = True
     k = 0
 
-    # while not learning:
-    #     pass
+    while learning:
+        pass
 
     return weights
 
 
-def batch_relaxation(p: Perceptron, samples: np.array, labels: np.array, rate: Callable[[float], float],
-                     margin: float = 0):
+def batch_relaxation(samples: np.array, labels: np.array, rate: LearningRate, b: float = 0,
+                     weights: np.array = None) -> np.array:
     """
     Batch Relaxation with Margin Perceptron rule (Algorithm 5.8 from the Duda book).
-    :param p: The perceptron to train.
-    :param samples: Training samples.
-    :param labels: Training labels.
-    :param rate: Training rate.
-    :param b: threshold
-
-    :return: The weights from training.
+    :param samples: Samples to use for training.
+    :param labels: The corresponding labels for samples.
+    :param rate: The learning rate.
+    :param b:
+    :param weights: Initial set of weights to use (default = identity matrix)
+    :return: The weights after training.
     """
-    learning = True
-    (n, feats) = samples.shape
-    weights = np.ones((feats + 1,))
-    k = -1
+    if weights is None:
+        weights = np.ones((samples.shape[-1],))
+
+    n = samples.shape[0]
+    k = 0
+    iterations = 0
 
     while True:
+        iterations += 1
+        mistakes = []
+
+        # Attempt classification
+        for y in samples:
+            net = np.dot(weights.T, y)
+            if net <= b:
+                mistakes.append(y)
+
+        # Update weights
+        error = np.sum([y * (b - np.dot(weights.T, y)) / np.sum(y ** 2) for y in mistakes])
+        weights = weights + rate(k) * error
+
+        # Terminate on convergence
+        if len(mistakes) == 0:
+            break
         k = (k + 1) % n
-        errors = []
-        j = 0
-        for j in range(n):
-            y = samples[j, :]
-            net = np.dot(weights[1:].T, y) + weights[0]
-            if net <= margin:
-                errors.append(y)
-        # update weights
-        weights = weights + rate(k)
-    pass
+
+    return weights
