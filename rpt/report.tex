@@ -1,0 +1,166 @@
+\documentclass{article}
+
+\usepackage[english]{babel}
+\usepackage{amsfonts, amsmath, amssymb, MnSymbol, graphicx, hyperref, amsthm, algorithmicx, algpseudocode}
+\usepackage[Algorithm,ruled]{algorithm}
+%\usepackage[explicit]{titlesec}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Shortcuts
+\newcommand{\mbrace}[1][ ]{\ensuremath{\left\{#1\right\}}}
+\newcommand{\rpm}{\ensuremath{\raisebox{0.5ex}{$\scriptstyle\pm$}}}
+\newcommand{\bfm}{\ensuremath{\mathbf{\mu}}}
+\newcommand{\bfs}{\ensuremath{\mathbf{\sigma}}}
+\newcommand{\mbf}[1]{\ensuremath{\mathbf{#1}}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\mkpartial}[2]{\ensuremath{\frac{\partial #1}{\partial #2}}}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% algpseudocode helpers
+\newcommand{\algtab}{\hspace{\algorithmicindent}}
+\newcommand{\algtitle}[1]{\smallskip\hrule\smallskip{\bf #1}\smallskip\hrule}
+
+\newenvironment{algo}[1]
+{\noindent\ignorespaces\algtitle{#1}\begin{algorithmic}[1]}
+{\end{algorithmic}\hrule\smallskip\ignorespacesafterend}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{CAP5638 Project 2\\\smallskip
+\large Classification Using Linear Discriminant Functions and Boosting Algorithms}
+\author{Suhib Sam Kiswani}
+\date{December 2, 2015}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\maketitle
+
+The algorithms were implemented in {\it Python 3.5}, with a dependence on the \textit{scipy} \cite{sp} library.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Basic Two-Class Classification Using Perceptron Algorithms}
+Abstractly, the problem is as follows:
+Given $n$ labeled training samples, $D=\{( x_1, L_1), (x_2, L_2), ..., (x_n, L_n)\}$, where $L_i = \rpm1$, implement Algorithm 4 (Fixed-Increment Single-Sample Perceptron Algorithm) and Algorithm 8 (Batch Relaxation with Margin) of Chapter 5 in the textbook.
+
+\bigskip
+
+The algorithms used for this method are:
+\begin{algo}{Algorithm 5.4 (Fixed-increment Single-Sample Perceptron)}
+\State {\bf initialize} $a,k = 0$
+\State {\bf do} ~$k \gets (k+1)\mod n$
+\State \algtab {\bf if} $\mbf{y}_k$ is misclassified by {\bf a} {\bf then} $\mbf{a} \gets \mbf{a} + \mbf{y}_k$
+\State {\bf until} all patterns properly classified
+\State {\bf return} $a$
+\end{algo}
+\bigskip
+\begin{algo}{Algorithm 5.8 (Batch Relaxation with Margin)}
+\State {\bf initialize} $a,\eta(\cdot),b,k \gets 0$
+\State {\bf do} ~$k \gets (k+1)\mod n$
+\State\algtab $\mc{Y}_k = \{\}$
+\State\algtab $j = 0$
+\State\algtab {\bf do} ~$j \gets j + 1$
+\State\algtab\algtab {\bf if} $\mbf{a}^t\mbf{y}^j \leq b$ {\bf then} Append $\mbf{y}^j$ to $\mc{Y}_k$
+\State\algtab {\bf until} ~$j = n$
+\State\algtab $\mbf{a} \gets \mbf{a} + \eta(k)\sum_{y\in\mc{Y}}\frac{b-\mbf{a}^t\mbf{y}}{||\mbf{y}||^2}\mbf{y}$
+\State {\bf until} $\mc{Y}_k = \{\}$
+\State {\bf return} $a$
+\end{algo}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Results}
+For each dataset, train a classifier to classify class 1 against the rest, class 2 against the rest, and class 3 against the rest by applying the two algorithms on the training set and then use the trained classifier on the test set (with labeling consistent with the training labeling). Document classification accuracy and iterations in training, and compare the two different algorithms. Note that USPS digit dataset may not be linearly separable and you then need to stop the algorithms in some way.
+
+\begin{enumerate}
+\item {\bf UCI Wine Data Set}
+\item {\bf USPS Handwritten Digit Data Set}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Multi-Class Classification}
+Use the basic two-class perceptron algorithms to solve multi-class classification problems by using the one-against-the-rest and one-against-the-other methods. Note that you need to handle ambiguous cases properly.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Results}
+For each dataset, now train a classifier to classify all the classes using the one-against-the-rest and the one-against-the-other methods based on the two two-class algorithms, resulting in four different classifiers on each dataset and then classify the test set. Document classification accuracy, iterations in training, and classification time for test, and compare the one-against-the- rest and the one-against-the-other methods.
+
+\begin{enumerate}
+\item {\bf UCI Wine Data Set}
+\item {\bf USPS Handwritten Digit Data Set}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Adaboost to Create Strong Classifers}
+Implement Algorithm 1 (AdaBoost) in Chapter 9 of the textbook to create a strong classifier using the above linear discriminant functions.
+
+\begin{figure}[H]
+\begin{algo}{Algorithm 9.1 (AdaBoost)}
+\newcommand{\mbx}{\mbf{x}}
+\State {\bf initialize} $\mc{D} = \mbrace{\mbx^1, y_1, ..., \mbx^n, y_n}, k_{max}, W_1(i) = 1/n, i = 1...n$
+\State $k = 0$
+\State {\bf do} ~$k \gets k+1$
+\State\algtab train weak learner $C_k$ using \mc{D} sampled according to $W_k(i)$
+\State\algtab $E_k \gets$ training error of $C_k$ measured on \mc{D} using $W_k(i)$
+\State\algtab $\alpha_k \gets 0.5 \ln\left[ (1-E_k) / E_k \right]$
+\State\algtab $W_{k+1}(i) = \frac{W_k(i)}{Z_k} \times \begin{cases}
+e^{-\alpha_k} & \text{ if } h_x(\mbx^i) = y_i \text{ (correct classification)}\\
+e^{\alpha_k} & \text{ if } h_k(\mbx^i) \neq y_i \text{ (incorrect classification)}
+\end{cases}$
+\State {\bf until} $k = k_{max}$
+\State {\bf return} $C_k$ and $\alpha_k$ for $k = 1$ to $k_{max}$ (ensemble of classifiers with weights)
+\end{algo}
+\end{figure}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\subsection{Results}
+Boost Algorithm 8 to create a strong classifier for class 1 vs. class 2, class 1 vs. class 3, and class 2 vs. class 3 on the two datasets. Then classify the corresponding test samples from the relevant classes in test sets (in other words, for example, for the class 1 vs. class 2 classifier, you only need to classify test samples from classes 1 and 2); then document classification accuracy and show and analyze the improvement.
+
+\begin{enumerate}
+\item {\bf UCI Wine Data Set}
+\item {\bf USPS Handwritten Digit Data Set}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Extra Credit}
+\subsection{Support vector machines}
+By using an available quadratic programming optimizer or an SVM library, implement a training and classification algorithm for support vector machines. Then use your algorithm on the USPS dataset. Document the classification accuracy and compare the results with that from the two basic algorithms.
+
+\subsubsection{Results}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Kernel method for linear discriminant functions}
+Given a kernel function, derive the kernel-version of Algorithm 4 and implement the algorithm, and then apply it on the given wine and USPS datasets. Document the classification accuracy and compare the results with that from the two basic algorithms without kernels. Use the polynomial function of degree three as the kernel function; optionally, you can use other commonly used kernel functions.
+
+\subsubsection{Results}
+\begin{enumerate}
+\item {\bf UCI Wine Data Set}
+\item {\bf USPS Handwritten Digit Data Set}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Multiple-class linear machines and multiple-class boosting}
+Use the Kesler’s construction to train a linear machine for multi-class classification and then use the SAMME algorithm to boost its performance on the training set. Apply the algorithm on both datasets and classify the corresponding test samples in the test sets. Document the classification accuracy and compare the results with that from the one-against-the-rest and one-against-the- other algorithms.
+
+\subsubsection{Results}
+\begin{enumerate}
+\item {\bf UCI Wine Data Set}
+\item {\bf USPS Handwritten Digit Data Set}
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thebibliography}{9}
+
+\bibitem{sp}
+    Jones E, Oliphant E, Peterson P, \emph{et al.}
+    {\bf SciPy: Open Source Scientific Tools for Python}, 2001-,
+    \url{http://www.scipy.org/} [Online; accessed 2015-10-24].
+
+\end{thebibliography}
+\end{document}
