@@ -163,7 +163,7 @@ def fixed_increment(samples: narray, debug: bool = True, **kwargs) -> np.array:
 
 def batch_relaxation(samples: narray,
                      rate: LearningRate,
-                     margin: float = 0.01,
+                     margin: float = 1,
                      debug: bool = True,
                      **kwargs) -> np.array:
     """
@@ -190,7 +190,8 @@ def batch_relaxation(samples: narray,
         # Attempt classification
         for y in samples:
             net = np.dot(weights.T, y)
-            if net <= margin:
+            if (net <= margin and y[0] > 0) or (net > margin and y[0] < 0):
+                # print("got %f for %f" % (net, y[0]))
                 errors.append(np.copy(y))
 
         # Terminate on convergence
@@ -201,8 +202,10 @@ def batch_relaxation(samples: narray,
 
         # Update weights
         correction = np.sum(
-                [np.sign(y[0]) * y * (margin - np.dot(weights.T, x)) / np.linalg.norm(x) ** 2 for x in errors], axis=0)
+                [np.sign(x[0]) * x * (margin - np.dot(weights.T, x)) / np.linalg.norm(x) ** 2 for x in errors],
+                axis=0)
         weights = weights + rate(k) * correction
         trial += 1
 
+    logger.info("Completed training after %i trials." % trial)
     return weights
