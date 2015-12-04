@@ -70,7 +70,7 @@ def run(method, training_file, testing_file, verbose: int = 0, cache: bool = Fal
     test_data = np.genfromtxt(testing_file)
 
     if method == "fixed" or method == "relax":
-        cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file.split('_')[0]))
+        cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
 
         if cache and os.path.exists(cpath):
             logging.info("Loading classifer at path <%s>" % (cpath))

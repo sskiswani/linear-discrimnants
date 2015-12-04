@@ -53,7 +53,7 @@ class Perceptron(Classifier):
             normalized = normalize_features(label, samples, labels)
             self.weights[label] = self.rule.method(normalized, debug=True)
             end = time.time()
-            logger.info("Training for class %s took %.3fs:\n%r" % (label, (end - begin), self.weights[label]))
+            logger.info("Training for class %s took %.3fs" % (label, (end - begin)))
         end = time.time()
         logger.info("Total training time: %.3f" % (end - start))
 
@@ -243,6 +243,9 @@ def batch_relaxation(samples: narray,
         delta = dist(old_weights, weights)
         if delta < bd:
             bd = delta
+
+        if approx(delta, 0, 0.00001) and approx(criterion(old_weights, errors, margin), 0, 0.00001):
+            break
 
         if trial % 5000 == 0:
             if debug:
