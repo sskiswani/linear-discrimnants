@@ -107,8 +107,10 @@ def normalize_features(cls: int, samples: narray, labels: narray, weight: float 
 
     return result
 
+score_itr = 0
+scores = [22788, 36093, 35558]
 
-def fixed_increment(samples: narray, rate: float = 0.01, **kwargs) -> np.array:
+def fixed_increment(samples: narray, **kwargs) -> np.array:
     """
     Fixed-Increment Single-Sample Perceptron rule (Algorithm 5.4 from the Duda book).
     :param samples: Normalized augmented features for training
@@ -120,7 +122,6 @@ def fixed_increment(samples: narray, rate: float = 0.01, **kwargs) -> np.array:
     (n, features) = samples.shape
     weights = np.random.rand(features, 1).reshape((features,))
     trial = 0
-    accuracy = []
 
     while True:
         trial += 1
@@ -128,25 +129,18 @@ def fixed_increment(samples: narray, rate: float = 0.01, **kwargs) -> np.array:
 
         for k, y in enumerate(samples):
             net = np.dot(weights.T, y)
-
             if signum(y[0]) != signum(net):
-                # print("missclassified (net: %s, y[0]: %f)\n" % (net,y[0]), y)
-                weights = weights + np.sign(y[0]) * rate * y
-                # weights = weights + rate(k) * y
-                # weights = weights + y
+                weights = weights + np.sign(y[0]) * y
                 errors += 1
 
-        accuracy.append(errors)
         if errors == 0:
-            print("Trial %i: %i errors" % (trial, errors))
             break
 
-        if trial == 1 or trial % 500 == 0:
+        if trial % 5000 == 0:
             print("Trial %i: %i errors" % (trial, errors))
 
     logger.info("Completed training after %i trials." % trial)
     return weights
-
 
 def batch_relaxation(samples: narray, rate: LearningRate, margin: float = 0.01, **kwargs) -> np.array:
     """
