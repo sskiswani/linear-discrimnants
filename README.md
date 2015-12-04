@@ -1,4 +1,4 @@
-# CAP5638 Project 2<br />Classification Using Linear Discriminant Functions and Boosting Algorithms
+# Classification Using Linear Discriminant Functions and Boosting Algorithms
 Python 3 implementation of various two-/multi- class linear discriminant functions through perceptron-like algorithms,
 that uses boosting algorithms to create accurate classifiers using linear discriminant functions.
 
