@@ -1,12 +1,13 @@
 import logging
+import os
+
 import numpy as np
-from . import util, core
+
 from . import perceptron, adaboost
+from . import util, core
 
 logger = logging.getLogger()
-# np.set_printoptions(precision=3, suppress=True, linewidth=80)
-# np.set_printoptions(linewidth=180)
-np.set_printoptions(suppress=True, linewidth=180)
+np.set_printoptions(precision=3, suppress=True, linewidth=180)
 
 _all_ = [
     'adaboost',
@@ -59,15 +60,27 @@ def set_logger(verbosity: int = 5):
     logging.info('Set logging level to %s (%i)' % (logging.getLevelName(level), level))
 
 
-def run(method, training_file, testing_file, verbose: int = 0, **kwargs):
+def run(method, training_file, testing_file, verbose: int = 0, cache: bool = False, **kwargs):
     set_logger(verbose)
-    logging.info('Loading training file "%s" and testing file "%s"' % (training_file, testing_file))
+    logging.info('Loading files <%s> and <%s>' % (training_file, testing_file))
 
     # Parse files.
     train_data = np.genfromtxt(training_file)
     test_data = np.genfromtxt(testing_file)
 
     if method == "fixed" or method == "relax":
-        classf = perceptron.Perceptron(method)
-        classf.train(train_data[:, 1:], train_data[:, 0])
-        # classf.test(test_data[:, 1:], train_data[:, 0])
+        cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file.split('_')[0]))
+
+        if cache and os.path.exists(cpath):
+            logging.info("Loading classifer at path <%s>" % (cpath))
+            classf = perceptron.Perceptron.load(cpath)
+        else:
+            if cache:
+                logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = perceptron.Perceptron(method)
+            classf.train(train_data[:, 1:], train_data[:, 0])
+            if cache:
+                logging.info("Caching Perceptron to <%s>" % (cpath))
+                classf.save(cpath)
+
+        classf.test(test_data[:, 1:], test_data[:, 0])

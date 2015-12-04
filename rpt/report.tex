@@ -3,10 +3,9 @@
 \usepackage[english]{babel}
 \usepackage{amsfonts, amsmath, amssymb, MnSymbol, graphicx, hyperref, amsthm, algorithmicx, algpseudocode}
 \usepackage[Algorithm,ruled]{algorithm}
-%\usepackage[explicit]{titlesec}
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% Shortcuts
+% Math Shortcuts
 \newcommand{\mbrace}[1][ ]{\ensuremath{\left\{#1\right\}}}
 \newcommand{\rpm}{\ensuremath{\raisebox{0.5ex}{$\scriptstyle\pm$}}}
 \newcommand{\bfm}{\ensuremath{\mathbf{\mu}}}
@@ -23,6 +22,11 @@
 \newenvironment{algo}[1]
 {\noindent\ignorespaces\algtitle{#1}\begin{algorithmic}[1]}
 {\end{algorithmic}\hrule\smallskip\ignorespacesafterend}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% Formatting Shortcuts
+\newcommand{\result}[1]{\subsubsection*{#1}}
+\newcommand{\fakesection}[1]{{\bf #1}\par}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -47,7 +51,7 @@ Given $n$ labeled training samples, $D=\{( x_1, L_1), (x_2, L_2), ..., (x_n, L_n
 \bigskip
 
 The algorithms used for this method are:
-\begin{algo}{Algorithm 5.4 (Fixed-increment Single-Sample Perceptron)}
+\begin{algo}{Algorithm 5.4 (Fixed-Increment Single-Sample Perceptron)}
 \State {\bf initialize} $a,k = 0$
 \State {\bf do} ~$k \gets (k+1)\mod n$
 \State \algtab {\bf if} $\mbf{y}_k$ is misclassified by {\bf a} {\bf then} $\mbf{a} \gets \mbf{a} + \mbf{y}_k$
@@ -70,12 +74,137 @@ The algorithms used for this method are:
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \subsection{Results}
+{\large TODO}
 For each dataset, train a classifier to classify class 1 against the rest, class 2 against the rest, and class 3 against the rest by applying the two algorithms on the training set and then use the trained classifier on the test set (with labeling consistent with the training labeling). Document classification accuracy and iterations in training, and compare the two different algorithms. Note that USPS digit dataset may not be linearly separable and you then need to stop the algorithms in some way.
 
-\begin{enumerate}
-\item {\bf UCI Wine Data Set}
-\item {\bf USPS Handwritten Digit Data Set}
-\end{enumerate}
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\result{UCI Wine Data Set}
+\fakesection{Algorithm 5.4 (Fixed-Increment Single-Sample Perceptron)}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline\multicolumn{3}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\\hline
+$\omega_1$ & 22864 & 27.498 \\
+$\omega_2$ & 52918 & 62.130 \\
+$\omega_3$ & 35600 & 127.227\\\hline
+\end{tabular}
+\end{center}
+
+The weights for each class after training were:
+\begin{center}
+\begin{tabular}{ ccc }
+$\mbf{a}_1 = \left[\begin{matrix}
+    61035.869 \\ 
+    -29616.504 \\ 
+    21752.882 \\ 
+    1483.633 \\
+    -25062.26 \\ 
+    157.921 \\ 
+    11769.882 \\ 
+    39925.061 \\
+    -8012.231 \\ 
+    32849.055 \\ 
+    18856.758 \\ 
+    -8917.463 \\
+    31289.131 \\ 
+    568.08
+\end{matrix}\right]$ & 
+$\mbf{a}_2 = \left[\begin{matrix}
+    137199.142 \\
+    37238.975 \\
+    -18303.661 \\
+    6240.703 \\
+    5099.608 \\
+    -3584.203 \\
+    28903.859 \\
+    -3043.506 \\
+    21158.897 \\
+    -25565.128 \\
+    -60256.757 \\
+    34175.689 \\
+    20013.206 \\
+    -55.379 
+\end{matrix}\right]$ & 
+$\mbf{a}_3 = \left[\begin{matrix}
+    90871.97 \\
+    2481.881 \\
+    -12760.566 \\
+    -7305.273 \\
+    6178.2 \\
+    3980.622 \\
+    -31851.585 \\
+    -51828.543 \\
+    -3346.438 \\
+    -17933.398 \\
+    39059.302 \\
+    -20064.289 \\
+    -62224.546 \\
+    -595.573
+\end{matrix}\right]$
+\end{tabular}
+\end{center}
+
+This resulted in 78 correct classifications out of 89 (87.6\% accuracy).
+
+\bigskip
+\fakesection{Algorithm 5.8 (Batch Relaxation with Margin)}
+After training the perceptron using Algorithm 5.8, the weights were:
+\begin{center}
+\begin{tabular}{ ccc }
+$\mbf{a}_1 = \left[\begin{matrix}
+61035.869 \\ 
+-29616.504 \\ 
+21752.882 \\ 
+1483.633 \\
+-25062.26 \\ 
+157.921 \\ 
+11769.882 \\ 
+39925.061 \\
+-8012.231 \\ 
+32849.055 \\ 
+18856.758 \\ 
+-8917.463 \\
+31289.131 \\ 
+568.08
+\end{matrix}\right]$ & 
+$\mbf{a}_2 = \left[\begin{matrix}
+    137199.142 \\
+    37238.975 \\
+    -18303.661 \\
+    6240.703 \\
+    5099.608 \\
+    -3584.203 \\
+    28903.859 \\
+    -3043.506 \\
+    21158.897 \\
+    -25565.128 \\
+    -60256.757 \\
+    34175.689 \\
+    20013.206 \\
+    -55.379 
+\end{matrix}\right]$ & 
+$\mbf{a}_3 = \left[\begin{matrix}
+    90871.97 \\
+    2481.881 \\
+    -12760.566 \\
+    -7305.273 \\
+    6178.2 \\
+    3980.622 \\
+    -31851.585 \\
+    -51828.543 \\
+    -3346.438 \\
+    -17933.398 \\
+    39059.302 \\
+    -20064.289 \\
+    -62224.546 \\
+    -595.573
+\end{matrix}\right]$
+\end{tabular}
+\end{center}
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\result{USPS Handwritten Digit Data Set}
+{\large TODO}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -84,11 +213,14 @@ Use the basic two-class perceptron algorithms to solve multi-class classificatio
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \subsection{Results}
+{\large TODO}
 For each dataset, now train a classifier to classify all the classes using the one-against-the-rest and the one-against-the-other methods based on the two two-class algorithms, resulting in four different classifiers on each dataset and then classify the test set. Document classification accuracy, iterations in training, and classification time for test, and compare the one-against-the- rest and the one-against-the-other methods.
 
 \begin{enumerate}
 \item {\bf UCI Wine Data Set}
+{\large TODO}
 \item {\bf USPS Handwritten Digit Data Set}
+{\large TODO}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,7 +252,9 @@ Boost Algorithm 8 to create a strong classifier for class 1 vs. class 2, class 1
 
 \begin{enumerate}
 \item {\bf UCI Wine Data Set}
+{\large TODO}
 \item {\bf USPS Handwritten Digit Data Set}
+{\large TODO}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -137,9 +271,12 @@ By using an available quadratic programming optimizer or an SVM library, impleme
 Given a kernel function, derive the kernel-version of Algorithm 4 and implement the algorithm, and then apply it on the given wine and USPS datasets. Document the classification accuracy and compare the results with that from the two basic algorithms without kernels. Use the polynomial function of degree three as the kernel function; optionally, you can use other commonly used kernel functions.
 
 \subsubsection{Results}
+{\large TODO}
 \begin{enumerate}
 \item {\bf UCI Wine Data Set}
+{\large TODO}
 \item {\bf USPS Handwritten Digit Data Set}
+{\large TODO}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,9 +285,12 @@ Given a kernel function, derive the kernel-version of Algorithm 4 and implement 
 Use the Kesler’s construction to train a linear machine for multi-class classification and then use the SAMME algorithm to boost its performance on the training set. Apply the algorithm on both datasets and classify the corresponding test samples in the test sets. Document the classification accuracy and compare the results with that from the one-against-the-rest and one-against-the- other algorithms.
 
 \subsubsection{Results}
+{\large TODO}
 \begin{enumerate}
 \item {\bf UCI Wine Data Set}
+{\large TODO}
 \item {\bf USPS Handwritten Digit Data Set}
+{\large TODO}
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

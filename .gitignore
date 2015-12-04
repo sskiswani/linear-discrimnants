@@ -5,6 +5,7 @@ rpt/*.aux
 rpt/*.log
 rpt/*.synctex.gz
 rpt/*.out
+classf_cache/
 
 # osx is annoying...
 .DS_Store

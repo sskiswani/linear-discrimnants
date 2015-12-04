@@ -27,7 +27,8 @@ if __name__ == '__main__':
     parser.add_argument('testing_file', nargs='?', type=lambda x: is_valid_file(parser, x), default=None, help='Testing data filepath')
 
     # Flag Arguments
-    parser.add_argument('-i', '--prompt', action='store_true', default=True, help="Use interactive prompt.")
+    parser.add_argument('-c', '--cache', action='store_true', default=False, help="Cache trained classifiers.")
+    parser.add_argument('-i', '--prompt', action='store_true', default=False, help="Use interactive prompt.")
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Detailed output and debugging information')
 
     # Parse
