@@ -53,7 +53,7 @@
 
 5. Number of Instances
 
-      	class 1 59
+    class 1 59
 	class 2 71
 	class 3 48
 

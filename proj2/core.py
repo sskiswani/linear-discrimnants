@@ -22,13 +22,16 @@ class Classifier(object):
         # self.priors = {a: (np.sum(classes == a) / n) for a in np.unique(classes)}
         pass
 
-    def test(self, samples, labels):
+    def train(self, samples: np.ndarray, labels: np.ndarray, **kwargs):
+        assert not hasattr(super(), 'train')
+
+    def test(self, samples: np.ndarray, labels: np.ndarray, **kwargs):
         assert not hasattr(super(), 'test')
 
-    def classify(self, data):
+    def classify(self, data: np.ndarray):
         assert not hasattr(super(), 'classify')
 
-    def iter_classify(self, data):
+    def iter_classify(self, data: np.ndarray):
         assert not hasattr(super(), 'iter_classify')
 
     def save(self, location: str):

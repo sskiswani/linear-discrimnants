@@ -35,8 +35,8 @@ python3 run.py <classification_method> <path/to/training_data_set> <path/to/clas
 The `classification_method` argument refers to the following keywords (or the method number):
 
 - Basic two-class classification (Method 1)
-    - `single` for the Fixed-Increment Single-Sample Perceptron Algorithm (Method 1a)
-    - `batch` for Batch Relaxation with Margin (Method 1b)
+    - `fixed` for the Fixed-Increment Single-Sample Perceptron Algorithm (Method 1a)
+    - `relax` for Batch Relaxation with Margin (Method 1b)
 - Multi-class classification (Method 2)
     - `rest`  for the one-against-the-rest method (Method 2a)
     - `other` for the one-against-the-other method (Method 2b)

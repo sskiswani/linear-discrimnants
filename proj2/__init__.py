@@ -26,3 +26,8 @@ def run(method, training_file, testing_file, verbose: int = 0, **kwargs):
     # Parse files.
     train_data = np.genfromtxt(training_file)
     test_data = np.genfromtxt(testing_file)
+
+    if method == "fixed" or method == "relax":
+        classf = perceptron.Perceptron(method)
+        classf.train(train_data[:, 1:], train_data[:, 0])
+        classf.test(test_data[:, 1:], train_data[:, 0])
