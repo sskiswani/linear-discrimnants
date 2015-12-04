@@ -1,6 +1,8 @@
 import logging
 import os
 import pickle
+from enum import Enum
+
 import numpy as np
 
 __all__ = [
@@ -8,6 +10,13 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+# class StrEnum(str, Enum):
+# def __eq__(self, other):
+#     if isinstance(other, str):
+#         return self.value == other
+#     return super().__eq__(other)
 
 
 class Classifier(object):
@@ -22,10 +31,10 @@ class Classifier(object):
         # self.priors = {a: (np.sum(classes == a) / n) for a in np.unique(classes)}
         pass
 
-    def train(self, samples: np.ndarray, labels: np.ndarray, **kwargs):
+    def train(self, samples: np.array, labels: np.array, **kwargs):
         assert not hasattr(super(), 'train')
 
-    def test(self, samples: np.ndarray, labels: np.ndarray, **kwargs):
+    def test(self, samples: np.array, labels: np.array, **kwargs):
         assert not hasattr(super(), 'test')
 
     def classify(self, data: np.ndarray):

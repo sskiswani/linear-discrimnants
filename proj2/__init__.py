@@ -1,5 +1,7 @@
 import logging
+
 import numpy as np
+
 from . import core
 from . import perceptron, adaboost
 
@@ -10,6 +12,17 @@ _all_ = [
     'adaboost',
     'core',
     'perceptron'
+]
+
+METHODS = [
+    "fixed",
+    "relax",
+    "rest",
+    "other",
+    "ada",
+    "svm",
+    "kern",
+    "samme"
 ]
 
 
