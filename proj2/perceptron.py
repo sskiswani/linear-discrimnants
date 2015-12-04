@@ -3,8 +3,8 @@ from itertools import cycle
 from enum import Enum
 from typing import Callable, Iterable, Union
 import numpy as np
-from numpy.random import rand
 from .core import Classifier
+from .util import approx
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +43,18 @@ class Perceptron(Classifier):
         super().__init__(**kwargs)
         self.strategy = Strategy(strategy)
         self.rule = TrainingRule(rule)
-        self.learning_rate = make_learning_rate() if learn_rate is None else learn_rate
+        # self.learning_rate = lambda x: 0.01
+        # self.learning_rate = make_learning_rate() if learn_rate is None else learn_rate
 
         # Training data placeholders
         self.discriminants = {}
 
     def train(self, samples: narray, labels: narray, **kwargs):
-        args = {'rate': self.learning_rate}
+        logger.info("Training using rule %s" % self.rule)
 
         for i, label in enumerate(np.unique(labels)):
             normalized = normalize_features(label, samples, labels)
-            self.discriminants[label] = self.rule.method(normalized, **args)
+            self.discriminants[label] = self.rule.method(normalized)
             logger.info("Weights after training for class %s: %r" % (label, self.discriminants[label]))
 
     def test(self, samples: narray, labels: narray, **kwargs):
@@ -107,36 +108,43 @@ def normalize_features(cls: int, samples: narray, labels: narray, weight: float 
     return result
 
 
-def fixed_increment(samples: narray, **kwargs) -> np.array:
+def fixed_increment(samples: narray, rate: float = 0.01, **kwargs) -> np.array:
     """
     Fixed-Increment Single-Sample Perceptron rule (Algorithm 5.4 from the Duda book).
     :param samples: Normalized augmented features for training
+    :param rate: The learning rate.
     :param kwargs:
     :return: The trained weights.
     """
+    signum = lambda x: np.sign(x) >= 0
     (n, features) = samples.shape
-    weights = np.random.rand(features,1).reshape((features,))
+    weights = np.random.rand(features, 1).reshape((features,))
     trial = 0
+    accuracy = []
 
     while True:
         trial += 1
         errors = 0
 
-        for y in samples:
+        for k, y in enumerate(samples):
             net = np.dot(weights.T, y)
-            correct = (y[0] > 0 and net >= 0) or (y[0] < 0 and net < 0)
 
-            if not correct:
-                weights += y
+            if signum(y[0]) != signum(net):
+                # print("missclassified (net: %s, y[0]: %f)\n" % (net,y[0]), y)
+                weights = weights + np.sign(y[0]) * rate * y
+                # weights = weights + rate(k) * y
+                # weights = weights + y
                 errors += 1
 
+        accuracy.append(errors)
         if errors == 0:
+            print("Trial %i: %i errors" % (trial, errors))
             break
 
         if trial == 1 or trial % 500 == 0:
-            old_weights = np.copy(weights)
+            print("Trial %i: %i errors" % (trial, errors))
 
-    print("Completed training after %i trials." % trial)
+    logger.info("Completed training after %i trials." % trial)
     return weights
 
 
@@ -152,7 +160,7 @@ def batch_relaxation(samples: narray, rate: LearningRate, margin: float = 0.01, 
     if not (0 < margin < 2):
         raise ValueError("Margin must be in the range (0,2), got %f" % margin)
     (n, features) = samples.shape
-    weights = np.random.rand(features,1).reshape((features,))
+    weights = np.random.rand(features, 1).reshape((features,))
     trial = 0
 
     for k in cycle(range(n)):
@@ -163,7 +171,7 @@ def batch_relaxation(samples: narray, rate: LearningRate, margin: float = 0.01, 
             net = np.dot(weights.T, y)
 
             if net <= margin or np.allclose(net, margin):
-                print("got error for value %f (label: %f)" % (net, y[0]))
+                # print("got error for value %f (label: %f)" % (net, y[0]))
                 errors.append(np.copy(y))
 
         # Terminate on convergence
