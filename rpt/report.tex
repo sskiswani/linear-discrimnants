@@ -26,7 +26,7 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Formatting Shortcuts
 \newcommand{\result}[1]{\subsubsection*{#1}}
-\newcommand{\fakesection}[1]{{\bf #1}\par}
+\newcommand{\fakesection}[1]{\noindent{\bf #1}\par}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -40,17 +40,17 @@
 \begin{document}
 \maketitle
 
-The algorithms were implemented in {\it Python 3.5}, with a dependence on the \textit{scipy} \cite{sp} library.
+The algorithms were implemented in Python 3.5, with a dependence on the \textit{scipy}~\cite{sp} library.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Basic Two-Class Classification Using Perceptron Algorithms}
 Abstractly, the problem is as follows:
-Given $n$ labeled training samples, $D=\{( x_1, L_1), (x_2, L_2), ..., (x_n, L_n)\}$, where $L_i = \rpm1$, implement Algorithm 4 (Fixed-Increment Single-Sample Perceptron Algorithm) and Algorithm 8 (Batch Relaxation with Margin) of Chapter 5 in the textbook.
+Given $n$ labeled training samples, $D=\{( x_1, L_1), (x_2, L_2), ..., (x_n, L_n)\}$, where $L_i = \rpm1$, implement Algorithm 4 (Fixed-Increment Single-Sample Perceptron Algorithm) and Algorithm 8 (Batch Relaxation with Margin) of Chapter 5 in the textbook \cite{duda}.
 
 \bigskip
 
-The algorithms used for this method are:
+The algorithms are:
 \begin{algo}{Algorithm 5.4 (Fixed-Increment Single-Sample Perceptron)}
 \State {\bf initialize} $a,k = 0$
 \State {\bf do} ~$k \gets (k+1)\mod n$
@@ -74,227 +74,179 @@ The algorithms used for this method are:
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \subsection*{Results}
-Long training times proved problematic, due to the fact that it took greater than 100000 iterations to reach convergence using the batch relaxation rule for both data sets. Most likely, this is due to the fact that the mean and standard deviation of the training samples was not normalized (however, the perceptron was trained using normalized augmented features, e.g. for training $\omega_1$, $y^T_i = [1, \mbf{x_i}]$ if $x_i$ belongs to $\omega_1$, and $y^T_i = [-1, -\mbf{x_i}]$ if $x_i$ is not a sample for $\omega_1$.
+Long training times proved problematic, due to the fact that it took greater than 100000 iterations to reach convergence using the fixed relaxation rule for the UCI wine data set. As such, the most significant result here is that the higher dimensional USPS handwritten digits data set converges much more rapidly than the UCI wine data set -- by several orders of magnitude. Futhermore, for the fixed-increment rule, accuracy is much greater when testing on the handwritten digits data set. The batch relaxation rule performed well for both data sets, though higher on average for the UCI wine data set.
 
-In order to compensate for the long training times, training would terminate after 100000 trials or if the change in weights was approximately zero and $J_p(a) \approx 0$ (Equation (33) from Chapter 5). It's very likely that these early-termination heuristics had a detrimental effect on the classification accuracy, since in these cases, the there was no guarantee that $\mbf{a}^T\mbf{y} \geq 0$ for all augmented $\mbf{y}$.
+This most likely has to do with the fact that the handwritten digits data set has a great deal more training samples than the wine data set. With more training samples to update the hyperplane, the classifier can converge to a solution much more rapidly. 
 
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As for the long training times for the wine data set, the updated weights $\mbf{a}(k)$ would oscillate between values for a long time before settling on a steady solution. To prevent this behaviour, several early termination heuristics were used. The heuristics were:
+\begin{enumerate}
+\item Always terminate after 100,000 iterations, and using the value of $\mbf{a}$ that minimizes $J_p(\mbf{a})$ for Algorithm 5.4 and $J_r(\mbf{a})$ for Algorithm 5.8.
+\item Terminate if, after 50,000 iterations, $||\mbf{a}(k+1) - \mbf{a}(k)|| \approx 0$, and $J_p(\mbf{a}) \approx 0$ for Algorithm 5.4 and $J_r(\mbf{a})\approx 0$ for Algorithm 5.8.
+\end{enumerate}
+
+Most likely, the necessity for early termination is due to the fact that the mean and standard deviation of the training samples was not normalized (however, the perceptron was trained using normalized augmented features, e.g. for training label $\omega_1$, $y^T_i = [1, \mbf{x_i}]$ if $x_i$ belongs to $\omega_1$, and $y^T_i = [-1, -\mbf{x_i}]$ if $x_i$ is not a sample for $\omega_1$.
+
+It's very likely that these early-termination heuristics had a detrimental effect on the classification accuracy, since in these cases, the there was no guarantee that $\mbf{a}^T\mbf{y} \geq 0$ for all augmented $\mbf{y}$.
+
 \result{UCI Wine Data Set}
 \fakesection{Algorithm 5.4 (Fixed-Increment Single-Sample Perceptron)}
 \begin{center}
-\begin{tabular}{|c|c|c|}
-\hline\multicolumn{3}{|c|}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\\hline
-$\omega_1$ & 22864 & 27.498 \\
-$\omega_2$ & 52918 & 62.130 \\
-$\omega_3$ & 35600 & 127.227\\
+\begin{tabular}{|c|c|c|c|}
+\hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Correct (of 89) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
+$\omega_1$ & 60 (67.42\%) & 100001 & 63.151 \\
+$\omega_2$ & 56 (62.92\%) & 100001 & 63.050 \\
+$\omega_3$ & 85 (95.51\%) & 84710 & 53.850\\
 \hline
-{\bf Total} & 111,382 & 216.855\\
+{\bf Total} & ~ & 284710 & 180.051\\
 \hline
 \end{tabular}
 \end{center}
 
-The weights for each class after training were:
+The corresponding weights after training were:
 \begin{center}
 \begin{tabular}{ ccc }
-$\mbf{a}_1 = \left[\begin{matrix}
-    61035.869 \\ 
-    -29616.504 \\ 
-    21752.882 \\ 
-    1483.633 \\
-    -25062.26 \\ 
-    157.921 \\ 
-    11769.882 \\ 
-    39925.061 \\
-    -8012.231 \\ 
-    32849.055 \\ 
-    18856.758 \\ 
-    -8917.463 \\
-    31289.131 \\ 
-    568.08
-\end{matrix}\right]$ & 
-$\mbf{a}_2 = \left[\begin{matrix}
-    137199.142 \\
-    37238.975 \\
-    -18303.661 \\
-    6240.703 \\
-    5099.608 \\
-    -3584.203 \\
-    28903.859 \\
-    -3043.506 \\
-    21158.897 \\
-    -25565.128 \\
-    -60256.757 \\
-    34175.689 \\
-    20013.206 \\
-    -55.379 
-\end{matrix}\right]$ & 
-$\mbf{a}_3 = \left[\begin{matrix}
-    90871.97 \\
-    2481.881 \\
-    -12760.566 \\
-    -7305.273 \\
-    6178.2 \\
-    3980.622 \\
-    -31851.585 \\
-    -51828.543 \\
-    -3346.438 \\
-    -17933.398 \\
-    39059.302 \\
-    -20064.289 \\
-    -62224.546 \\
-    -595.573
+$\mbf{a}_{\omega_1} = \left[\begin{matrix}
+-2.\\-23.54\\-1.28\\-3.54\\-36.8\\-136.\\-2.7\\0.36\\-1.34\\2.3\\-2.86\\-2.88\\-0.42\\-490.
+\end{matrix}\right]$ &
+$\mbf{a}_{\omega_2} = \left[\begin{matrix}
+9484.0\\56298.47\\-26970.62\\9950.26\\-10456.6\\-3765.\\55712.08\\-1502.68\\36611.34\\-40821.68\\-109006.33\\65677.49\\44053.19\\-430.0
+\end{matrix}\right]$ &
+$\mbf{a}_{\omega_3} = \left[\begin{matrix}
+451.0\\-1399.63\\-10081.3\\-16667.88\\28250.3\\2665.0\\-71066.41\\-107364.33\\-12267.75\\-24570.91\\94303.98\\-52048.4\\-132265.0\\-958.0
 \end{matrix}\right]$
 \end{tabular}
 \end{center}
-
-This resulted in 78 correct classifications out of 89 (87.6\% accuracy).
 
 \bigskip
+
 \fakesection{Algorithm 5.8 (Batch Relaxation with Margin)}
-Due to the large number of training iterations, training was capped to 100000 iterations.
+
 \begin{center}
-\begin{tabular}{|c|c|c|}
-\multicolumn{3}{c}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\\hline
-$\omega_1$ & 100000 & 104.886 \\
-$\omega_2$ & 100000 & 146.686 \\
-$\omega_3$ & 100000 & 147.255\\\hline
-{\bf Total} & 300000 & 398.827\\\hline
+\begin{tabular}{|c|c|c|c|}
+\hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Correct (of 89) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
+$\omega_1$ & 87 (97.75\%) & 22864 & 27.498 \\
+$\omega_2$ & 85 (95.51\%) & 52918 & 62.130 \\
+$\omega_3$ & 83 (93.26\%) & 35600 & 127.227\\
+\hline
+{\bf Total} & ~ & 111,382 & 216.855\\
+\hline
 \end{tabular}
 \end{center}
 
-After training the perceptron using Algorithm 5.8, the weights were:
+The corresponding weights after training were:
 \begin{center}
 \begin{tabular}{ ccc }
-$\mbf{a}_1 = \left[\begin{matrix}
-    0.582 \\
-    -0.213 \\
-    0.487 \\
-    0.728 \\
-    -0.381 \\
-    -0.069 \\
-    0.881 \\
-    0.103 \\
-    0.246 \\
-    0.188 \\
-    0.494 \\
-    0.443 \\
-    0.534 \\
-    0.008
-\end{matrix}\right]$ & 
-$\mbf{a}_2 = \left[\begin{matrix}
-    0.539 \\
-    0.306 \\
-    0.402 \\
-    0.633 \\
-    -0.193 \\
-    -0.021 \\
-    0.284 \\
-    0.145 \\
-    0.69  \\
-    0.973 \\
-    -0.288 \\
-    0.054 \\
-    0.657 \\
-    -0.006
-\end{matrix}\right]$ & 
-$\mbf{a}_3 = \left[\begin{matrix}
-    0.371 \\
-    0.141 \\
-    0.511 \\
-    0.841 \\
-    -0.176 \\
-    -0.042 \\
-    0.062 \\
-    0.114 \\
-    0.545 \\
-    0.337 \\
-    0.601 \\
-    0.142 \\
-    -0.14  \\
-    -0.003
+$\mbf{a}_{\omega_1} = \left[\begin{matrix}
+0.796\\-0.31 \\ 0.768 \\ 0.183 \\ -0.362 \\ -0.063 \\  0.74 \\ 0.153 \\ 0.867 \\  0.601 \\ 0.128 \\ 0.216 \\ 0.583 \\ 0.01
+\end{matrix}\right]$ &
+$\mbf{a}_{\omega_2} = \left[\begin{matrix}
+261.354 \\ 869.172 \\ -1800.878 \\ -101.749 \\ 1335.277\\6.557\\1335.119\\1928.754\\99.223\\921.129\\-6428.793\\895.385\\2459.442\\-33.943
+\end{matrix}\right]$ &
+$\mbf{a}_{\omega_1} = \left[\begin{matrix}
+0.855\\-0.161\\0.587\\0.188\\-0.108\\-0.017\\0.295\\-0.334\\0.758\\-0.18\\0.882\\-0.084\\0.086\\-0.003
 \end{matrix}\right]$
 \end{tabular}
 \end{center}
 
-This resulted in 83 correct classifications out of 89 (93.26\% accuracy)
-
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\result{USPS Handwritten Digit Data Set}
-
-\begin{center}
+\result{USPS Handwritten Digits Data Set}
 \fakesection{Algorithm 5.4 (Fixed-Increment Single-Sample Perceptron)}
-\begin{tabular}{|c|c|c|}
-\multicolumn{3}{c}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\
-\hline
-$\omega_0$ & 15 & 0.061 \\
-$\omega_1$ & 5 & 0.021 \\
-$\omega_2$ & 13 & 0.049 \\
-$\omega_3$ & 9 & 0.033 \\
-$\omega_4$ & 24 & 0.081 \\
-$\omega_5$ & 17 & 0.050 \\
-$\omega_6$ & 11 & 0.033 \\
-$\omega_7$ & 21 &  0.062 \\
-$\omega_8$ & 20 & 0.059 \\
-$\omega_9$ & 42 & 0.118 \\
-\hline
-{\bf Total} & 177 & 0.571\\
-\hline
-\end{tabular}
-\end{center}
 
-The weights are too large to display in the report, however they can be displayed by using the run.py script, by invoking the command ``python3 run.py fixed bin/digits\_train.txt bin/digits\_test.txt''
-
-\bigskip
-
-This resulted in 1598 correct classifications out of 2007 (79.62\% accuracy)
-
-\bigskip
-\fakesection{Algorithm 5.8 (Batch Relaxation with Margin)}
-In order to reach convergence more quickly, the algorithm terminated when the change in weights was approximately zero, and $J_r(a) \approx 0$ (Equation (33) from Chapter 5).
 \begin{center}
-\begin{tabular}{|c|c|c|}
-\multicolumn{3}{c}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Iterations} & {\bf Runtime (s)}\\
+\begin{tabular}{|c|c|c|c|}
+\hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
+$\omega_0$ & 1928 (96.06\%) &17 trials & 0.031\\
+$\omega_1$ & 1982 (98.75\%) & 9 trials & 0.018\\
+$\omega_2$ & 1873 (93.32\%) & 14 trials & 0.026\\
+$\omega_3$ & 1896 (94.47\%) & 14 trials & 0.033\\
+$\omega_4$ & 1897 (94.52\%) & 23 trials & 0.040\\
+$\omega_5$ & 1905 (94.92\%) & 22 trials & 0.042\\
+$\omega_6$ & 1960 (97.66\%) & 25 trials & 0.047\\
+$\omega_7$ & 1926 (95.96\% & 25 trials & 0.045\\
+$\omega_8$ & 1881 (93.72\%) & 20 trials & 0.037\\
+$\omega_9$ & 1919 (95.62\%) & 41 trials & 0.073\\
 \hline
-$\omega_0$ & 1114 & 2.923 \\
-$\omega_1$ & 1424 & 3.833 \\
-$\omega_2$ & 1106 & 2.955 \\
-$\omega_3$ & 1179 & 3.351 \\
-$\omega_4$ & 1357 & 3.856 \\
-$\omega_5$ & 1524 & 4.176 \\
-$\omega_6$ & 1331 & 3.617 \\
-$\omega_7$ & 2335 & 6.104 \\
-$\omega_8$ & 1189 & 3.186 \\
-$\omega_9$ & 2561 & 7.022 \\
-\hline
-{\bf Total} & 15120 & 41.023\\
+{\bf Total} & ~ & 210 & 0.392\\
 \hline
 \end{tabular}
 \end{center}
 
-The weights are too large to display in the report, however they can be displayed by using the run.py script, by invoking the command ``python3 run.py relax bin/digits\_train.txt bin/digits\_test.txt''
+The weights are too large to display in the report, however they can be displayed by invoking the following command using the included run.py script:
+\begin{center}
+python3 run.py fixed bin/digits\_train.txt bin/digits\_test.txt
+\end{center}
 
 \bigskip
 
-This resulted in 1614 correct classifications out of 2007 (80.42\% accuracy)
+\fakesection{Algorithm 5.8 (Batch Relaxation with Margin)}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
+\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
+$\omega_0$ & 1837 (91.53\%) & 717 & 1.297 \\
+$\omega_1$ & 1917 (95.52\%) & 742 & 1.277 \\
+$\omega_2$ & 1850 (92.18\%) & 606 & 1.084 \\
+$\omega_3$ & 1894 (94.37\%) & 434 & 0.744 \\
+$\omega_4$ & 1843 (91.83\%) & 597 & 1.130 \\
+$\omega_5$ & 1900 (94.67\%) & 825 & 1.571 \\
+$\omega_6$ & 1891 (94.22\%) & 831 & 1.612 \\
+$\omega_7$ & 1904 (94.87\%) & 1358 & 2.581 \\
+$\omega_8$ & 1863 (92.83\%) & 934 & 1.907 \\
+$\omega_9$ & 1898 (94.57\%) & 1649 & 3.331 \\
+\hline
+{\bf Total} & ~ & 18797 & 16.535\\
+\hline
+\end{tabular}
+\end{center}
+
+The weights are too large to display in the report, however they can be displayed by invoking the following command using the included run.py script:
+\begin{center}
+python3 run.py relax bin/digits\_train.txt bin/digits\_test.txt
+\end{center}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \section{Multi-Class Classification}
-Use the basic two-class perceptron algorithms to solve multi-class classification problems by using the one-against-the-rest and one-against-the-other methods. Note that you need to handle ambiguous cases properly.
+%Use the basic two-class perceptron algorithms to solve multi-class classification problems by using the one-against-the-rest and one-against-the-other methods. Note that you need to handle ambiguous cases properly.
+For this classification method, both the fixed-increment and batch relaxation training rules from the previous section were used for testing.
+
+For one-against-the-rest classification, a sample was classified as $\omega_i$ if $\mbf{a}^T_i \mbf{x} \geq \mbf{a}^T_j \mbf{x}$ for all $i \neq j$.
+
+
+For one-against-other classification...
+{\huge TODO}
+
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \subsection*{Results}
-{\large TODO}
-For each dataset, now train a classifier to classify all the classes using the one-against-the-rest and the one-against-the-other methods based on the two two-class algorithms, resulting in four different classifiers on each dataset and then classify the test set. Document classification accuracy, iterations in training, and classification time for test, and compare the one-against-the- rest and the one-against-the-other methods.
+%For each dataset, now train a classifier to classify all the classes using the one-against-the-rest and the one-against-the-other methods based on the two two-class algorithms, resulting in four different classifiers on each dataset and then classify the test set. Document classification accuracy, iterations in training, and classification time for test, and compare the one-against-the- rest and the one-against-the-other methods.
+\emph{(Note: The runtime statistics for training are tabulated in the previous section)}
+
+\result{UCI Wine Data Set}
+
+\fakesection{One-Against-the-Rest}
+Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest classifier correctly classified 68 testing samples out of 89 (76.40\% accuracy). There were 111382 iterations during training (taking $\approx 216.855$ seconds). 
 
 \bigskip
-\fakesection{UCI Wine Data Set}
+
+Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 85 testing samples out of 89 (95.51\% accuracy). There were 300000 iterations during training (taking $\approx 398.827$ seconds). 
+
 \bigskip
-\fakesection{USPS Handwritten Digits Data Set}
+\fakesection{One-Against-the-Other}
+
+{\Huge TODO}
+
+\bigskip
+\result{USPS Handwritten Digits Data Set}
+\fakesection{One-Against-the-Rest}
+Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest classifier correctly classified 1608 samples out of 2007 (80.12\% accuracy). Training occured over 177 iterations ($\approx 0.571$ seconds) 
+
+Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 1605 testing samples out of 2007 (79.97\% accuracy). Training occured over 15120 iterations ($\approx 41.023$ seconds).
+
+\fakesection{One-Against-the-Other}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -364,6 +316,10 @@ Use the Kesler’s construction to train a linear machine for multi-class classi
     Jones E, Oliphant E, Peterson P, \emph{et al.}
     {\bf SciPy: Open Source Scientific Tools for Python}, 2001-,
     \url{http://www.scipy.org/} [Online; accessed 2015-10-24].
+    
+\bibitem{duda}
+	Richard O. Duda, Peter E. Hart, and David G. Stork
+	{\bf Pattern Classification} 2nd edition
 
 \end{thebibliography}
 \end{document}

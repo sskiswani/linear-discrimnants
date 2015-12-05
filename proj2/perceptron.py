@@ -36,27 +36,26 @@ class TrainingRule(str, Enum):
 class Perceptron(Classifier):
     def __init__(self, rule: TrainingRule = "fixed",
                  strategy: Strategy = "rest",
-                 learn_rate: LearningRate = None,
+                 learn_rate: float = 0.05,
                  **kwargs):
         super().__init__(**kwargs)
         self.strategy = Strategy(strategy)
         self.rule = TrainingRule(rule)
         self.weights = {}
-        self.learning_rate = make_learning_rate(0.01) if learn_rate is None else learn_rate
+        self.learning_rate = learn_rate
 
     def train(self, samples: narray, labels: narray, **kwargs):
         logger.info("Training using rule %s" % self.rule)
-
         start = time.time()
-        for i, label in enumerate(np.unique(labels)):
+
+        for label in np.unique(labels):
             begin = time.time()
             normalized = normalize_features(label, samples, labels)
-            self.weights[label] = self.rule.method(normalized, debug=True)
+            self.weights[label] = self.rule.method(normalized, rate=self.learning_rate, debug=True)
             end = time.time()
-
             logger.info("Training for class %s took %.3fs" % (label, (end - begin)))
-        end = time.time()
 
+        end = time.time()
         logger.info("Total training time: %.3f" % (end - start))
 
     def test(self, samples: narray, labels: narray, **kwargs):
@@ -67,12 +66,24 @@ class Perceptron(Classifier):
         :param kwargs: extra arguments
         """
         correct = 0
-        for trial, (true, classf) in enumerate(zip(labels, self.iter_classify(samples))):
+        labs = [0 for _ in range(len(self.weights))]
+        for trial, (true, (classf, vals)) in enumerate(zip(labels, self.iter_classify(samples, debug=True))):
+            if self.strategy == Strategy.OneAgainstRest:
+                for i in range(len(vals)):
+                    if (true == vals[i][0] and vals[i][1] > 0) or (true != vals[i][0] and vals[i][1] <= 0):
+                        labs[i] += 1
+
             if true == classf:
                 correct += 1
 
-        # Output statistics
         total = samples.shape[0]
+        if self.strategy == Strategy.OneAgainstRest:
+            for i, label in enumerate(self.weights.keys()):
+                acc = (labs[i] / total) * 100.0
+                print("Class %i vs rest: %i correct out of %i (%.2f accuracy)" % (label, labs[i], total, acc))
+
+
+        # Output statistics
         acc = (correct / total) * 100.0
         print("Got %i correct out of %i (%.2f accuracy)" % (correct, total, acc))
 
@@ -112,10 +123,6 @@ def criterion_gradient(weights: narray, errors: Iterable[narray], b: float = 0) 
     return np.array([y * (np.dot(weights, y) - b) / np.sum(y ** 2) for y in errors])
 
 
-def make_learning_rate(rate: float = 1) -> float:
-    return lambda k: rate
-
-
 def normalize_features(cls: int, samples: narray, labels: narray, weight: float = 1, negative_weight: float = -1):
     (n, features) = samples.shape
     result = np.ones((n, features + 1))
@@ -137,7 +144,7 @@ def fixed_increment(samples: narray, theta: float = 0.000003, debug: bool = True
     :return: The trained weights.
     """
     (n, features) = samples.shape
-    weights = np.ones((features,))
+    weights = np.zeros((features,))
     trial = -1
     best = np.inf
     bestd = np.inf
@@ -181,7 +188,7 @@ def fixed_increment(samples: narray, theta: float = 0.000003, debug: bool = True
 
 def batch_relaxation(samples: narray,
                      rate: float = 0.02,
-                     margin: float = 1.5,
+                     margin: float = 2,
                      theta: float = 0.001,
                      debug: bool = True,
                      **kwargs) -> np.array:
@@ -241,7 +248,7 @@ def batch_relaxation(samples: narray,
             if debug:
                 crit = criterion(weights, errors, margin)
                 logger.debug("Trial %i: %i errors (best %i, best delta: %f) rate %.2f crit: %f" % (
-                trial, len(errors), best, bd, rate, crit))
+                    trial, len(errors), best, bd, rate, crit))
 
         trial += 1
 
