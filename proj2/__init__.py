@@ -59,15 +59,16 @@ def set_logger(verbosity: int = 5):
     logging.info('Set logging level to %s (%i)' % (logging.getLevelName(level), level))
 
 
-def run(method, training_file, testing_file, verbose: int = 0, cache: bool = False, **kwargs):
+def run(method, training_file, testing_file, rule="fixed", strategy="rest", verbose: int = 0, cache: bool = False,
+        **kwargs):
     set_logger(verbose)
     logging.info('Loading files <%s> and <%s>' % (training_file, testing_file))
 
-    # Parse files.
+    # Parse files
     train_data = np.genfromtxt(training_file)
     test_data = np.genfromtxt(testing_file)
 
-    if method == "rest" or method == "other":
+    if method == "multi":
         cpath = 'bin/classf_cache/mptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
 
         if cache and os.path.exists(cpath):
@@ -76,7 +77,8 @@ def run(method, training_file, testing_file, verbose: int = 0, cache: bool = Fal
         else:
             if cache:
                 logging.info("Coulnd't find classifier in cache, training a new one.")
-            classf = perceptron.MulticlassPerceptron(perceptron.TrainingRule("fixed"), method)
+            classf = perceptron.MulticlassPerceptron(perceptron.TrainingRule(rule),
+                                                     strategy=perceptron.Strategy(strategy))
 
         classf.train(train_data[:, 1:], train_data[:, 0])
 
@@ -85,16 +87,16 @@ def run(method, training_file, testing_file, verbose: int = 0, cache: bool = Fal
             classf.save(cpath)
 
         classf.test(test_data[:, 1:], test_data[:, 0])
-    elif method == "fixed" or method == "relax":
+
+    if method == "single":
         cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
 
         if cache and os.path.exists(cpath):
             logging.info("Loading classifer at path <%s>" % (cpath))
             classf = perceptron.Perceptron.load(cpath)
         else:
-            if cache:
-                logging.info("Coulnd't find classifier in cache, training a new one.")
-            classf = perceptron.Perceptron(method)
+            if cache: logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = perceptron.Perceptron(perceptron.TrainingRule(rule))
 
         classf.train(train_data[:, 1:], train_data[:, 0])
 

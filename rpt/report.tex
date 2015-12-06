@@ -25,6 +25,7 @@
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Formatting Shortcuts
+\newcommand{\imgwidth}{.8\textwidth}
 \newcommand{\result}[1]{\subsubsection*{#1}}
 \newcommand{\fakesection}[1]{\noindent{\bf #1}\par}
 
@@ -228,10 +229,16 @@ For one-against-other classification...
 
 \fakesection{One-Against-the-Rest}
 Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest classifier correctly classified 68 testing samples out of 89 (76.40\% accuracy). There were 111382 iterations during training (taking $\approx 216.855$ seconds). 
+\begin{center}
+\includegraphics[width=\imgwidth]{mc_ovr_wine_fixed}
+\end{center}
 
 \bigskip
 
 Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 85 testing samples out of 89 (95.51\% accuracy). There were 300000 iterations during training (taking $\approx 398.827$ seconds). 
+\begin{center}
+\includegraphics[width=\imgwidth]{mc_ovr_wine_batch}
+\end{center}
 
 \bigskip
 \fakesection{One-Against-the-Other}
@@ -241,9 +248,19 @@ Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classi
 \bigskip
 \result{USPS Handwritten Digits Data Set}
 \fakesection{One-Against-the-Rest}
-Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest classifier correctly classified 1608 samples out of 2007 (80.12\% accuracy). Training occured over 177 iterations ($\approx 0.571$ seconds) 
+{\large Completed training after 27 trials. Total training time: 2.923
+1617 correct out of 2007 (80.57 accuracy)}
 
-Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 1605 testing samples out of 2007 (79.97\% accuracy). Training occured over 15120 iterations ($\approx 41.023$ seconds).
+Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest classifier correctly classified 1608 samples out of 2007 (80.12\% accuracy). Training occured over 177 iterations ($\approx 0.571$ seconds).
+\begin{center}
+\includegraphics[width=\imgwidth]{mc_ovr_digits_fixed}
+\end{center}
+
+Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 1626 testing samples out of 2007 (81.02\% accuracy). Training occured over 142 training trials ($\approx 23.032$ seconds).
+\begin{center}
+\includegraphics[width=\imgwidth]{mc_ovr_digits_batch}
+\end{center}
+
 
 \fakesection{One-Against-the-Other}
 
