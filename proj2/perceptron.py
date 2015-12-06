@@ -82,7 +82,6 @@ class Perceptron(Classifier):
                 acc = (labs[i] / total) * 100.0
                 print("Class %i vs rest: %i correct out of %i (%.2f accuracy)" % (label, labs[i], total, acc))
 
-
         # Output statistics
         acc = (correct / total) * 100.0
         print("Got %i correct out of %i (%.2f accuracy)" % (correct, total, acc))
@@ -108,6 +107,64 @@ class Perceptron(Classifier):
     @property
     def labels(self):
         return self.weights.keys()
+
+
+class MulticlassPerceptron(Classifier):
+    def __init__(self, rule: TrainingRule = "fixed", strategy: Strategy = "rest", learn_rate: float = 0.05, **kwargs):
+        super().__init__(**kwargs)
+        self.strategy = Strategy(strategy)
+        self.rule = TrainingRule(rule)
+        self.learning_rate = learn_rate
+        self.weights = {}
+
+    def train(self, samples: narray, labels: narray, **kwargs):
+        logger.info("Training using rule %s" % self.rule)
+        start = time.time()
+
+        if self.strategy == Strategy.OneAgainstRest:
+            self.weights = self.fixed_increment(samples, labels, rate=self.learning_rate, debug=True)
+
+        end = time.time()
+        logger.info("Total training time: %.3f" % (end - start))
+
+    def fixed_increment(self, samples: narray, labels: narray, **kwargs):
+        max_trials = kwargs.get('max_trials', np.inf)
+        (n, features) = samples.shape
+        classes = np.unique(labels)
+        weights = {c: np.zeros((features,)) for c in classes}
+
+        trial = -1
+        while True:
+            errors = []
+            trial += 1
+            if trial > max_trials:
+                break
+
+            for x, l in zip(samples, labels):
+                net_max = -np.inf
+                pred = None
+
+                for (c, w) in weights.items():
+                    net = np.sum(np.dot(w, x))
+                    if net > net_max:
+                        net_max = net
+                        pred = (c, w)
+
+                if pred[0] != l:
+                    errors.append(x)
+                    weights[l] += x
+                    weights[pred[0]] -= x
+                # if trial % 1000 == 0 and pred[0] != l:
+                #     print("pred: ", pred[0], " actual: ", l)
+            if len(errors) == 0:
+                break
+            if trial % 1000 == 0:
+                logger.debug("Trial %i: %i errors" % (trial, len(errors)))
+
+        return weights
+
+    def relax_training(self, samples: narray, labels: narray, **kwargs):
+        pass
 
 
 def perceptron_criterion(weights: narray, errors: Iterable[narray]) -> float:

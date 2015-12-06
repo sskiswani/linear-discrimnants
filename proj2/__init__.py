@@ -1,8 +1,6 @@
 import logging
 import os
-
 import numpy as np
-
 from . import perceptron, adaboost
 from . import util, core
 
@@ -69,7 +67,25 @@ def run(method, training_file, testing_file, verbose: int = 0, cache: bool = Fal
     train_data = np.genfromtxt(training_file)
     test_data = np.genfromtxt(testing_file)
 
-    if method == "fixed" or method == "relax":
+    if method == "rest" or method == "other":
+        cpath = 'bin/classf_cache/mptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
+
+        if cache and os.path.exists(cpath):
+            logging.info("Loading classifer at path <%s>" % (cpath))
+            classf = perceptron.MulticlassPerceptron.load(cpath)
+        else:
+            if cache:
+                logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = perceptron.MulticlassPerceptron(perceptron.TrainingRule("fixed"), method)
+
+        classf.train(train_data[:, 1:], train_data[:, 0])
+
+        if cache:
+            logging.info("Caching Perceptron to <%s>" % (cpath))
+            classf.save(cpath)
+
+        classf.test(test_data[:, 1:], test_data[:, 0])
+    elif method == "fixed" or method == "relax":
         cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
 
         if cache and os.path.exists(cpath):
@@ -79,9 +95,11 @@ def run(method, training_file, testing_file, verbose: int = 0, cache: bool = Fal
             if cache:
                 logging.info("Coulnd't find classifier in cache, training a new one.")
             classf = perceptron.Perceptron(method)
-            classf.train(train_data[:, 1:], train_data[:, 0])
-            if cache:
-                logging.info("Caching Perceptron to <%s>" % (cpath))
-                classf.save(cpath)
+
+        classf.train(train_data[:, 1:], train_data[:, 0])
+
+        if cache:
+            logging.info("Caching Perceptron to <%s>" % (cpath))
+            classf.save(cpath)
 
         classf.test(test_data[:, 1:], test_data[:, 0])
