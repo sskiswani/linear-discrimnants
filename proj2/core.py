@@ -1,22 +1,14 @@
 import logging
 import os
 import pickle
-from enum import Enum
-
 import numpy as np
+from .util import narray
 
 __all__ = [
     'Classifier',
 ]
 
 logger = logging.getLogger(__name__)
-
-
-# class StrEnum(str, Enum):
-# def __eq__(self, other):
-#     if isinstance(other, str):
-#         return self.value == other
-#     return super().__eq__(other)
 
 
 class Classifier(object):
@@ -31,31 +23,25 @@ class Classifier(object):
         # self.priors = {a: (np.sum(classes == a) / n) for a in np.unique(classes)}
         pass
 
-    def train(self, samples: np.array, labels: np.array, **kwargs):
+    def train(self, samples: narray, labels: narray, **kwargs):
         assert not hasattr(super(), 'train')
 
-    def test(self, samples: np.array, labels: np.array, **kwargs):
+    def test(self, samples: narray, labels: narray, **kwargs):
         assert not hasattr(super(), 'test')
 
-    def classify(self, data: np.ndarray):
-        assert not hasattr(super(), 'classify')
+    def classify(self, data: narray, **kwargs) -> narray:
+        return np.array(list(self.iter_classify(data)))
 
-    def iter_classify(self, data: np.ndarray):
+    def iter_classify(self, data: np.ndarray, **kwargs):
         assert not hasattr(super(), 'iter_classify')
 
-    def save(self, location: str):
-        """
-        Pickle this Classifier.
-        """
+    def save(self, location: str, **kwargs):
         fpath = os.path.abspath(location)
         with open(fpath, 'wb') as f:
             pickle.dump(self.__dict__, f)
 
     @classmethod
-    def load(cls, location: str):
-        """
-        Load a pickled classifier.
-        """
+    def load(cls, location: str, **kwargs):
         fname = os.path.abspath(location)
         obj = cls.__new__(cls)
 
