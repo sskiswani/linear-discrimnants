@@ -155,36 +155,15 @@ class MulticlassPerceptron(Classifier):
 
             num_errors = 0
             for x, l in zip(samples, labels):
-                voters = {}
-                votes = np.zeros_like(classes)
+                for (key, weight) in weights.items():
+                    if l not in key: continue
 
-                for ((pos, neg), weight) in weights.items():
-                    net = np.dot(weight, x)
-                    if net < 0:
-                        votes[neg] += 1
-                        voters[(pos, neg)] = neg
-                    else:
-                        votes[pos] += 1
-                        voters[(pos, neg)] = pos
-
-                best = np.argsort(votes)[::-1]
-                pred = best[0]
-
-                if pred != l:
-                    num_errors += 1
-                    for key in weights:
-                        if l not in key and pred not in key: continue
-                        if voters[key] == l: continue
-
-                        # if pred == key[0]:
-                        #     weights[key] -= x
-                        # elif pred == key[1]:
-                        #     weights[key] += x
-
-                        if l == key[0]:
-                            weights[key] += x
-                        elif l == key[1]:
-                            weights[key] -= x
+                    if l == key[0] and np.dot(weight, x) <= 0:
+                        num_errors += 1
+                        weights[key] += x
+                    elif l == key[1] and np.dot(weight, -x) <= 0:
+                        num_errors += 1
+                        weights[key] -= x
 
             if len(trials) % 1000 == 0:
                 logger.debug("Trial %i: %i errors" % (len(trials), num_errors))
@@ -249,49 +228,31 @@ class MulticlassPerceptron(Classifier):
                 logger.debug("Early termination due to max_trials (%r)" % max_trials)
                 break
 
-            errors = {key: [] for key in weights}
             num_errors = 0
+            errors = {key: [] for key in weights}
             for x, l in zip(samples, labels):
-                voters = {}
-                votes = np.zeros_like(classes)
+                for (key, weight) in weights.items():
+                    if l not in key:
+                        continue
 
-                for ((pos, neg), weight) in weights.items():
-                    net = np.dot(weight, x)
-                    if net <= margin:
-                        votes[neg] += 1
-                        voters[(pos, neg)] = neg
-                    else:
-                        votes[pos] += 1
-                        voters[(pos, neg)] = pos
-
-                best = np.argsort(votes)[::-1]
-                pred = best[0]
-
-                if pred != l:
-                    num_errors += 1
-                    for key in weights:
-                        if l not in key and pred not in key: continue
-                        if voters[key] == l: continue
-
-                        if pred == key[0]:
-                            errors[key].append(-x)
-                        elif pred == key[1]:
-                            errors[key].append(x)
-
-                        if l == key[0]:
-                            errors[key].append(x)
-                        elif l == key[1]:
-                            errors[key].append(-x)
+                    if l == key[0] and np.dot(weight, x) <= margin:
+                        num_errors += 1
+                        weights[key] += x
+                        errors[key].append(x)
+                    elif l == key[1] and np.dot(weight, -x) <= margin:
+                        num_errors += 1
+                        weights[key] -= x
+                        errors[key].append(-x)
 
             delta = 0
-            for key, err_list in errors.items():
-                update = rate * np.sum([x * (margin - np.dot(weights[key], x)) / np.sum(x ** 2) for x in err_list],
+            for key in errors:
+                update = rate * np.sum([x * (margin - np.dot(weights[key], x)) / np.sum(x ** 2) for x in errors[key]],
                                        axis=0)
                 delta += np.abs(np.sum(update))
                 weights[key] += update
 
             if len(trials) % 100 == 0:
-                logger.debug("Trial %i: %i errors" % (len(trials), num_errors))
+                logger.debug("Trial %i: %i errors (delta: %.5f)" % (len(trials), num_errors, delta))
             trials.append(num_errors)
             if num_errors == 0:
                 break
@@ -502,6 +463,7 @@ def batch_relaxation(samples: narray, rate: float = 0.02, margin: float = 2, the
 
         # Terminate on convergence
         if len(errors) == 0:
+            logger.debug("Terminated due to convergence.")
             break
 
         # Update weights

@@ -36,11 +36,10 @@ if __name__ == '__main__':
     # Parse
     args = parser.parse_args()
 
+
     # Run
-    from proj2 import run
-    run(**vars(args))
-
-    # if args.prompt and args.method is None:
-    #     print("Choose a classification method, options are:\n\t - %s" % '\n\t - '.join(proj2.METHODS))
-    #     args.method = input("Method: ")
-
+    import proj2
+    if args.method == "debug":
+        proj2.debug(**vars(args))
+    else:
+        proj2.run(**vars(args))
