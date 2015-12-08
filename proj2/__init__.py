@@ -1,8 +1,6 @@
 import logging
 import os
-
 import numpy as np
-
 from . import perceptron, adaboost
 from . import util, core
 
@@ -17,42 +15,6 @@ _all_ = [
     'util'
 ]
 
-DEFAULTS = {
-    "fixed": {
-        "wine": {},
-        "digits": {"rate": 1}
-    },
-    "relax": {
-        "wine": {"rate": 1},
-        "digits": {"rate": 1}
-    },
-    "rest": {
-        "wine": {},
-        "digits": {}
-    },
-    "other": {
-        "wine": {},
-        "digits": {}
-    },
-    "ada": {
-        "wine": {},
-        "digits": {}
-    },
-    "svm": {
-        "wine": {},
-        "digits": {}
-    },
-    "kern": {
-        "wine": {},
-        "digits": {}
-    },
-    "samme": {
-        "wine": {},
-        "digits": {}
-    }
-}
-METHODS = DEFAULTS.keys()
-
 
 def set_logger(verbosity: int = 5):
     level = list(range(6))[5 - verbosity % 6] * 10
@@ -61,27 +23,73 @@ def set_logger(verbosity: int = 5):
     logging.info('Set logging level to %s (%i)' % (logging.getLevelName(level), level))
 
 
-def run(method, training_file, testing_file, verbose: int = 0, cache: bool = False, **kwargs):
+def debug(**kwargs):
+    if training_file is None: training_file = 'bin/debug_train.txt'
+    if testing_file is None: testing_file = 'bin/debug_test.txt'
+    if os.path.exists(training_file)
+    print("hi", training_file)
+    pass
+
+
+def run(method, training_file, testing_file, rule="fixed", strategy="rest", verbose: int = 0, cache: bool = False,
+        **kwargs):
     set_logger(verbose)
     logging.info('Loading files <%s> and <%s>' % (training_file, testing_file))
 
-    # Parse files.
+    # Parse files
     train_data = np.genfromtxt(training_file)
     test_data = np.genfromtxt(testing_file)
 
-    if method == "fixed" or method == "relax":
+    if method == "ada":
+        cpath = 'bin/classf_cache/ada_%s_%s.pcl' % (method, os.path.basename(training_file).split('_')[0])
+
+        if cache and os.path.exists(cpath):
+            logging.info("Loading classifer at path <%s>" % (cpath))
+            classf = adaboost.AdaBoost.load(cpath)
+        else:
+            if cache:
+                logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = adaboost.AdaBoost()
+        classf.train(train_data[:, 1:], train_data[:, 0])
+
+        if cache:
+            logging.info("Caching Perceptron to <%s>" % (cpath))
+            classf.save(cpath)
+        classf.test(test_data[:, 1:], test_data[:, 0])
+
+    elif method == "multi":
+        cpath = 'bin/classf_cache/mptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
+
+        if cache and os.path.exists(cpath):
+            logging.info("Loading classifer at path <%s>" % (cpath))
+            classf = perceptron.MulticlassPerceptron.load(cpath)
+        else:
+            if cache:
+                logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = perceptron.MulticlassPerceptron(perceptron.TrainingRule(rule),
+                                                     strategy=perceptron.Strategy(strategy))
+
+        classf.train(train_data[:, 1:], train_data[:, 0])
+
+        if cache:
+            logging.info("Caching Perceptron to <%s>" % (cpath))
+            classf.save(cpath)
+
+        classf.test(test_data[:, 1:], test_data[:, 0])
+    elif method == "single":
         cpath = 'bin/classf_cache/ptron_%s_%s.picl' % (method, os.path.basename(training_file).split('_')[0])
 
         if cache and os.path.exists(cpath):
             logging.info("Loading classifer at path <%s>" % (cpath))
             classf = perceptron.Perceptron.load(cpath)
         else:
-            if cache:
-                logging.info("Coulnd't find classifier in cache, training a new one.")
-            classf = perceptron.Perceptron(method)
-            classf.train(train_data[:, 1:], train_data[:, 0])
-            if cache:
-                logging.info("Caching Perceptron to <%s>" % (cpath))
-                classf.save(cpath)
+            if cache: logging.info("Coulnd't find classifier in cache, training a new one.")
+            classf = perceptron.Perceptron(perceptron.TrainingRule(rule))
+
+        classf.train(train_data[:, 1:], train_data[:, 0])
+
+        if cache:
+            logging.info("Caching Perceptron to <%s>" % (cpath))
+            classf.save(cpath)
 
         classf.test(test_data[:, 1:], test_data[:, 0])

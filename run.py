@@ -26,19 +26,20 @@ if __name__ == '__main__':
     parser.add_argument('training_file', nargs='?', type=lambda x: is_valid_file(parser, x), default=None, help='Training data filepath')
     parser.add_argument('testing_file', nargs='?', type=lambda x: is_valid_file(parser, x), default=None, help='Testing data filepath')
 
+
     # Flag Arguments
+    parser.add_argument('-r', '--rule', default='fixed', help='Specify training rule.')
+    parser.add_argument('-s', '--strategy', default='rest', help="Multicategory classification strategy.")
     parser.add_argument('-c', '--cache', action='store_true', default=False, help="Cache trained classifiers.")
-    parser.add_argument('-i', '--prompt', action='store_true', default=False, help="Use interactive prompt.")
-    parser.add_argument('-v', '--verbose', action='count', default=0, help='Detailed output and debugging information')
+    parser.add_argument('-v', '--verbose', action='count', default=0, help='Detailed output and debugging information.')
 
     # Parse
     args = parser.parse_args()
 
+
     # Run
     import proj2
-
-    if args.prompt and args.method is None:
-        print("Choose a classification method, options are:\n\t - %s" % '\n\t - '.join(proj2.METHODS))
-        args.method = input("Method: ")
-
-    proj2.run(**vars(args))
+    if args.method == "debug":
+        proj2.debug(**vars(args))
+    else:
+        proj2.run(**vars(args))

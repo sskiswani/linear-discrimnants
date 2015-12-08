@@ -4,9 +4,10 @@ that uses boosting algorithms to create accurate classifiers using linear discri
 
 The UCI Wine and USPS Handwritten Digits data sets are included in the `./bin/` directory.
 
-The implementation results detailed in the report (`./rpt/report.pdf`) can be recreated using the `run.py` script. 
-The `run.py` script will accepts the classification method, training data, and classification data as command-line arguments,
+The implementation results detailed in the report (`./rpt/report.pdf`) can be recreated using the command `python3 run.py`. 
+The `run.py` script will also accept the classification method, training data, and classification data as command-line arguments,
 in the following format:
+
 ```
 python3 run.py <classification_method> <path/to/training_data> <path/to/classification_data>
 ```
@@ -23,27 +24,33 @@ See the usage section, or use the `--help` (or `-h`) flag for additional informa
 - matplotlib v1.5 (plots will be omitted from output if not satisfied)
 
 ## Usage
-The `run.py` file provides a way to interact with the module.
+Execution of `run.py` without any arguments will generate the results described in the report, which amounts to both training and
+running each classification method on the both of the data sets and outputting the results. `run.py` can also take command-line arguments
+in the following fashion:
+
 ```
-python3 run.py <classification_method> <path/to/training_data_set> <path/to/classification_data_set> -s STRATEGY -r TRAINING_RULE
+python3 run.py <classification_method> <path/to/training_data_set> <path/to/classification_data_set>
 ```
 
-The `classification_method` argument refers to the following keywords:
+The `classification_method` argument refers to the following keywords (or the method number):
 
-- `single` for basic two-class classification
-- `multi` for multicategory classification
+- Basic two-class classification (Method 1)
+    - `fixed` for the Fixed-Increment Single-Sample Perceptron Algorithm (Method 1a)
+    - `relax` for Batch Relaxation with Margin (Method 1b)
+- Multi-class classification (Method 2)
+    - `rest`  for the one-against-the-rest method (Method 2a)
+    - `other` for the one-against-the-other method (Method 2b)
 - `ada` to use Adaboost to create strong classifiers. (Method 3)
+- `svm` for support vector machines (Method 4)
+- `kern` (Method 5)
+- `samme` (Method 6)
 
-The `training_rule` option is for choosing the Perceptron learning rule:
+If no training and/or classification file is provided, the method is used on both of the provided data sets. 
+For example:
 
-- `fixed` for the Fixed-Increment Single-Sample Perceptron Algorithm (Method 1a)
-- `batch` for Batch Relaxation with Margin (Method 1b)
+- `python3 run.py 1a` will run the Fixed-Increment Single-Sample Perceptron Algorithm on both data sets (equivalent to `python3 run.py single`).
+- `python3 run.py ada ./train_set.txt ./test_set.txt` will use `./train_set.txt` to train AdaBoost strong classifiers and use `./test_set.txt` to test their accuracy (equivalent to `python3 run.py 3 ./train_set.txt ./test_set.txt`).
 
-The `strategy` option is for multicategory classification only, and corresponds to:
- 
- - `rest` for one-against-the-rest classification
- - `other` for one-agains-the-other classification
- 
 Data sets should be in the same format as those in the `./bin/` folder, i.e.:
 
 ```
