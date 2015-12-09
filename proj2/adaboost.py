@@ -282,14 +282,14 @@ def sample_from(data, weights: narray, min_size=1, cap=100000) -> narray:
     vals, choices = [], []
     attempt = 0
     while len(vals) < min_size:
-        p = random.random() * np.sum(weights)
+        prob = random.random() * np.sum(weights)
         attempt += 1
         if attempt >= cap: break
-        while p > 0:
+        while prob > 0:
             c = np.random.choice(data.shape[0], p=weights)
             choices.append(c)
             vals.append(data[c])
-            p -= weights[c]
+            prob -= weights[c]
     return np.array(vals)
 
 
