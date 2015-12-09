@@ -167,8 +167,8 @@ class AdaBoost(object):
             weak = WeakClassifier(set_data, name="WC%i" % k, silent=self.silent)
 
             # Get training error of Ck
-            testing_samples = set_data
-            # testing_samples = sample_from(set_data, distro)
+            # testing_samples = set_data
+            testing_samples = sample_from(set_data, distro)
             hk = np.array(weak.classify(np.array([x[0] * x[1:] for x in testing_samples])))
             wrong = np.sum(0 if is_correct(h, y) else 1 for (h, y) in zip(hk, testing_samples[:, 0]))
 
