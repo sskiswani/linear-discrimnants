@@ -1,10 +1,10 @@
 import logging
 import random
 import typing
-from time import time
 from collections import Counter
 from enum import Enum
 from itertools import combinations
+from time import time
 
 import numpy as np
 
@@ -226,6 +226,7 @@ class MulticlassAdaBoost(Classifier):
     def train(self, samples: narray, labels: narray, **kwargs):
         begin = time()
         classes = np.unique(labels)
+        self.sets = list(combinations(classes, 2))
         for lset in list(combinations(classes, 2)):
             start = time()
             ada = AdaBoost(lset, self.size, silent=self.silenceChildren)
@@ -248,7 +249,8 @@ class MulticlassAdaBoost(Classifier):
         logger.info("MCAdaBoost: %i correct of %i (%.2f%%)" % (correct, total, acc))
 
         # Test individuals
-        for set, ada in self.classifiers.items():
+        for lset in self.sets:
+            ada = self.classifiers[lset]
             ada.silent = False
             ada.test(samples, labels)
 
@@ -281,10 +283,19 @@ def sample_from(data, weights: narray, min_size=5, cap=100000) -> narray:
 
 
 def run(train_data: narray, test_data: narray, ada_size: int = 10):
-    mc = MulticlassAdaBoost(size=ada_size, silenceChildren=True)
-    mc.train(train_data[:, 1:], train_data[:, 0])
-    mc.test(test_data[:, 1:], test_data[:, 0])
-    return mc
+    # mc = MulticlassAdaBoost(size=ada_size, silenceChildren=True)
+    # mc.train(train_data[:, 1:], train_data[:, 0])
+    # mc.test(test_data[:, 1:], test_data[:, 0])
+    # return mc
+
+    result = []
+    for lset in [(8, 9), (1, 2), (1, 3), (2, 3)]:
+        ada = AdaBoost(lset, ada_size)
+        ada.train(train_data[:, 1:], train_data[:, 0], label_set=lset)
+        ada.test(test_data[:, 1:], test_data[:, 0])
+        exit()
+        result.append(ada)
+    return result
 
 
 def run_individual(train_data: narray, test_data: narray, ada_size: int = 10):

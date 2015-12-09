@@ -126,7 +126,7 @@ $\mbf{a}_{\omega_3} = \left[\begin{matrix}
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Correct (of 89) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
+\hline{\bf Class} & {\bf Correct (of 89) (\%)} & {\bf Iterations} & {\bf Training Time (s)}\\\hline
 $\omega_1$ & 87 (97.75\%) & 22864 & 27.498 \\
 $\omega_2$ & 85 (95.51\%) & 52918 & 62.130 \\
 $\omega_3$ & 83 (93.26\%) & 35600 & 127.227\\
@@ -157,17 +157,17 @@ $\mbf{a}_{\omega_1} = \left[\begin{matrix}
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
-$\omega_0$ & 1928 (96.06\%) &17 trials & 0.031\\
-$\omega_1$ & 1982 (98.75\%) & 9 trials & 0.018\\
-$\omega_2$ & 1873 (93.32\%) & 14 trials & 0.026\\
-$\omega_3$ & 1896 (94.47\%) & 14 trials & 0.033\\
-$\omega_4$ & 1897 (94.52\%) & 23 trials & 0.040\\
-$\omega_5$ & 1905 (94.92\%) & 22 trials & 0.042\\
-$\omega_6$ & 1960 (97.66\%) & 25 trials & 0.047\\
-$\omega_7$ & 1926 (95.96\% & 25 trials & 0.045\\
-$\omega_8$ & 1881 (93.72\%) & 20 trials & 0.037\\
-$\omega_9$ & 1919 (95.62\%) & 41 trials & 0.073\\
+\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Training Time (s)}\\\hline
+$\omega_0$ & 1928 (96.06\%) &17 & 0.031s\\
+$\omega_1$ & 1982 (98.75\%) & 9 & 0.018s\\
+$\omega_2$ & 1873 (93.32\%) & 14 & 0.026s\\
+$\omega_3$ & 1896 (94.47\%) & 14 & 0.033s\\
+$\omega_4$ & 1897 (94.52\%) & 23 & 0.040s\\
+$\omega_5$ & 1905 (94.92\%) & 22 & 0.042s\\
+$\omega_6$ & 1960 (97.66\%) & 25 & 0.047s\\
+$\omega_7$ & 1926 (95.96\% & 25 & 0.045s\\
+$\omega_8$ & 1881 (93.72\%) & 20 & 0.037s\\
+$\omega_9$ & 1919 (95.62\%) & 41 & 0.073s\\
 \hline
 {\bf Total} & ~ & 210 & 0.392\\
 \hline
@@ -186,17 +186,17 @@ python3 run.py fixed bin/digits\_train.txt bin/digits\_test.txt
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline\multicolumn{4}{|c|}{{\bf Training Statistics}}\\
-\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Runtime(s)}\\\hline
-$\omega_0$ & 1837 (91.53\%) & 717 & 1.297 \\
-$\omega_1$ & 1917 (95.52\%) & 742 & 1.277 \\
-$\omega_2$ & 1850 (92.18\%) & 606 & 1.084 \\
-$\omega_3$ & 1894 (94.37\%) & 434 & 0.744 \\
-$\omega_4$ & 1843 (91.83\%) & 597 & 1.130 \\
-$\omega_5$ & 1900 (94.67\%) & 825 & 1.571 \\
-$\omega_6$ & 1891 (94.22\%) & 831 & 1.612 \\
-$\omega_7$ & 1904 (94.87\%) & 1358 & 2.581 \\
-$\omega_8$ & 1863 (92.83\%) & 934 & 1.907 \\
-$\omega_9$ & 1898 (94.57\%) & 1649 & 3.331 \\
+\hline{\bf Class} & {\bf Correct (of 2007) (\%)} & {\bf Iterations} & {\bf Training Time (s)}\\\hline
+$\omega_0$ & 1837 (91.53\%) & 717 & 1.297s \\
+$\omega_1$ & 1917 (95.52\%) & 742 & 1.277s \\
+$\omega_2$ & 1850 (92.18\%) & 606 & 1.084s \\
+$\omega_3$ & 1894 (94.37\%) & 434 & 0.744s \\
+$\omega_4$ & 1843 (91.83\%) & 597 & 1.130s \\
+$\omega_5$ & 1900 (94.67\%) & 825 & 1.571s \\
+$\omega_6$ & 1891 (94.22\%) & 831 & 1.612s \\
+$\omega_7$ & 1904 (94.87\%) & 1358 & 2.581s \\
+$\omega_8$ & 1863 (92.83\%) & 934 & 1.907s \\
+$\omega_9$ & 1898 (94.57\%) & 1649 & 3.331s \\
 \hline
 {\bf Total} & ~ & 18797 & 16.535\\
 \hline
@@ -290,12 +290,73 @@ e^{\alpha_k} & \text{ if } h_k(\mbx^i) \neq y_i \text{ (incorrect classification
 \subsection*{Results}
 Boost Algorithm 8 to create a strong classifier for class 1 vs. class 2, class 1 vs. class 3, and class 2 vs. class 3 on the two datasets. Then classify the corresponding test samples from the relevant classes in test sets (in other words, for example, for the class 1 vs. class 2 classifier, you only need to classify test samples from classes 1 and 2); then document classification accuracy and show and analyze the improvement.
 
-\fakesection{UCI Wine Data Set}
-\begin{enumerate}
-\item todo
-\end{enumerate}
 \bigskip
+
+\fakesection{UCI Wine Data Set}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline{\bf Classes} & {\bf Correct / Total (Accuracy)} & {\bf Training Time (s)}\\ \hline
+$\omega_1$ vs $\omega_2$ & 34 / 34 (100\%) & 6.61s\\
+$\omega_1$ vs $\omega_3$ & 34 / 34 (100\%) & 6.35s\\
+$\omega_2$ vs $\omega_3$ & 34 / 34 (100\%) & 5.75s\\ \hline
+{\bf Multiclass} & 17 / 51 (33.33\%)  & 18.71s\\ \hline 
+\end{tabular}
+\end{center}
+
+\bigskip
+
 \fakesection{USPS Handwritten Digits Data Set}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline{\bf Classes} & {\bf Correct / Total (Accuracy)} & {\bf Training Time (s)}\\ \hline
+$\omega_0$ vs $\omega_1$ & 264 / 623 (42.38\%) & 4.88s \\
+$\omega_0$ vs $\omega_2$ & 198 / 557 (35.55\%) & 4.53s \\
+$\omega_0$ vs $\omega_3$ & 166 / 525 (31.62\%) & 4.30s \\
+$\omega_0$ vs $\omega_4$ & 200 / 559 (35.78\%) & 4.40s \\
+$\omega_0$ vs $\omega_5$ & 160 / 519 (30.83\%) & 4.38s \\
+$\omega_0$ vs $\omega_6$ & 170 / 529 (32.14\%) & 4.49s \\
+$\omega_0$ vs $\omega_7$ & 147 / 506 (29.05\%) & 4.37s \\
+$\omega_0$ vs $\omega_8$ & 166 / 525 (31.62\%) & 4.30s \\
+$\omega_0$ vs $\omega_9$ & 177 / 536 (33.02\%) & 4.36s \\
+$\omega_1$ vs $\omega_2$ & 462 / 462 (100.00\%) & 3.67s \\
+$\omega_1$ vs $\omega_3$ & 430 / 430 (100.00\%) & 3.70s \\
+$\omega_1$ vs $\omega_4$ & 464 / 464 (100.00\%) & 3.66s \\
+$\omega_1$ vs $\omega_5$ & 423 / 424 (99.76\%) & 3.67s \\
+$\omega_1$ vs $\omega_6$ & 434 / 434 (100.00\%) & 3.77s \\
+$\omega_1$ vs $\omega_7$ & 411 / 411 (100.00\%) & 3.80s \\
+$\omega_1$ vs $\omega_8$ & 430 / 430 (100.00\%) & 3.88s \\
+$\omega_1$ vs $\omega_9$ & 441 / 441 (100.00\%) & 4.20s \\
+$\omega_2$ vs $\omega_3$ & 364 / 364 (100.00\%) & 4.59s \\
+$\omega_2$ vs $\omega_4$ & 398 / 398 (100.00\%) & 4.64s \\
+$\omega_2$ vs $\omega_5$ & 358 / 358 (100.00\%) & 4.58s \\
+$\omega_2$ vs $\omega_6$ & 368 / 368 (100.00\%) & 4.82s \\
+$\omega_2$ vs $\omega_7$ & 345 / 345 (100.00\%) & 4.58s \\
+$\omega_2$ vs $\omega_8$ & 364 / 364 (100.00\%) & 4.62s \\
+$\omega_2$ vs $\omega_9$ & 375 / 375 (100.00\%) & 4.62s \\
+$\omega_3$ vs $\omega_4$ & 365 / 366 (99.73\%) & 4.43s \\
+$\omega_3$ vs $\omega_5$ & 326 / 326 (100.00\%) & 4.32s \\
+$\omega_3$ vs $\omega_6$ & 336 / 336 (100.00\%) & 4.36s \\
+$\omega_3$ vs $\omega_7$ & 313 / 313 (100.00\%) & 4.38s \\
+$\omega_3$ vs $\omega_8$ & 332 / 332 (100.00\%) & 4.37s \\
+$\omega_3$ vs $\omega_9$ & 343 / 343 (100.00\%) & 4.33s \\
+$\omega_4$ vs $\omega_5$ & 360 / 360 (100.00\%) & 4.44s \\
+$\omega_4$ vs $\omega_6$ & 370 / 370 (100.00\%) & 4.45s \\
+$\omega_4$ vs $\omega_7$ & 347 / 347 (100.00\%) & 4.44s \\
+$\omega_4$ vs $\omega_8$ & 366 / 366 (100.00\%) & 4.46s \\
+$\omega_4$ vs $\omega_9$ & 377 / 377 (100.00\%) & 4.39s \\
+$\omega_5$ vs $\omega_6$ & 330 / 330 (100.00\%) & 4.74s \\
+$\omega_5$ vs $\omega_7$ & 307 / 307 (100.00\%) & 4.73s \\
+$\omega_5$ vs $\omega_8$ & 326 / 326 (100.00\%) & 4.76s \\
+$\omega_5$ vs $\omega_9$ & 337 / 337 (100.00\%) & 4.78s \\
+$\omega_6$ vs $\omega_7$ & 317 / 317 (100.00\%) & 4.01s \\
+$\omega_6$ vs $\omega_8$ & 336 / 336 (100.00\%) & 4.00s \\
+$\omega_6$ vs $\omega_9$ & 347 / 347 (100.00\%) & 4.02s \\
+$\omega_7$ vs $\omega_8$ & 313 / 313 (100.00\%) & 4.10s \\
+$\omega_7$ vs $\omega_9$ & 324 / 324 (100.00\%) & 4.04s \\
+$\omega_8$ vs $\omega_9$ & 343 / 343 (100.00\%) & 4.11s \\ \hline
+{\bf Multiclass} & 359 / 2007 (17.89\%)  & 209.49s\\ \hline 
+\end{tabular}
+\end{center}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
