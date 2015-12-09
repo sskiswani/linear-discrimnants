@@ -1,7 +1,9 @@
 import logging
 import os
 import pickle
+
 import numpy as np
+
 from .util import narray
 
 __all__ = [
@@ -10,6 +12,22 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
+class DataSet(object):
+    def __init__(self, data: narray):
+        self.data = data
+
+    @property
+    def labels(self) -> narray:
+        return self.data[:, 0]
+
+    @property
+    def samples(self) -> narray:
+        return self.data[:, 1:]
+
+    def __iter__(self):
+        for x in self.data:
+            yield x
 
 class Classifier(object):
     """

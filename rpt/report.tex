@@ -236,9 +236,7 @@ Using the fixed increment rule (Algorithm 5.4 above), the one-against-the-rest c
 \bigskip
 
 Using the batch relaxation rule (Algorithm 5.8), the one-against-the-rest classifier correctly classified 85 testing samples out of 89 (95.51\% accuracy). There were 300000 iterations during training (taking $\approx 398.827$ seconds). 
-\begin{center}
-\includegraphics[width=\imgwidth]{mc_ovr_wine_batch}
-\end{center}
+%\begin{center}\includegraphics[width=\imgwidth]{mc_ovr_wine_batch}\end{center}
 
 \bigskip
 \fakesection{One-Against-the-Other}
@@ -280,7 +278,7 @@ Implement Algorithm 1 (AdaBoost) in Chapter 9 of the textbook to create a strong
 \State\algtab $E_k \gets$ training error of $C_k$ measured on \mc{D} using $W_k(i)$
 \State\algtab $\alpha_k \gets 0.5 \ln\left[ (1-E_k) / E_k \right]$
 \State\algtab $W_{k+1}(i) = \frac{W_k(i)}{Z_k} \times \begin{cases}
-e^{-\alpha_k} & \text{ if } h_x(\mbx^i) = y_i \text{ (correct classification)}\\
+e^{-\alpha_k} & \text{ if } h_k(\mbx^i) = y_i \text{ (correct classification)}\\
 e^{\alpha_k} & \text{ if } h_k(\mbx^i) \neq y_i \text{ (incorrect classification)}
 \end{cases}$
 \State {\bf until} $k = k_{max}$
@@ -294,7 +292,7 @@ Boost Algorithm 8 to create a strong classifier for class 1 vs. class 2, class 1
 
 \fakesection{UCI Wine Data Set}
 \begin{enumerate}
-
+\item todo
 \end{enumerate}
 \bigskip
 \fakesection{USPS Handwritten Digits Data Set}
