@@ -49,12 +49,12 @@ class Criterion(str, Enum):
 
 
 class WeakClassifier(object):
-    def __init__(self, data: narray, bias=500.0, rate: LearnRateType = None, name: str = None, silent: bool = False,
+    def __init__(self, data: narray, bias=15.0, rate: LearnRateType = None, name: str = None, silent: bool = False,
                  **kwargs):
         self.name = get(name, "WeakClassifier")
         self.criterion = Criterion.Jr
         self.bias = bias
-        self.learn_rate = get(rate, lambda k: 0.01)
+        self.learn_rate = get(rate, lambda k: 0.03)
         self.silent = silent
 
         self.weights = self.batch_relaxation(data, **kwargs)
@@ -64,7 +64,7 @@ class WeakClassifier(object):
         logger.info(msg)
 
     def batch_relaxation(self, data: narray, **kwargs) -> narray:
-        is_correct = lambda h, l: (h > self.bias and l > 0) or (h <= self.bias and l <= 0)
+        is_correct = lambda h, l: (h > self.bias and l > 0) or (h < self.bias and l <= 0)
         max_trials = kwargs.get('max_trials', 100000)
 
         (n, features) = data.shape
@@ -78,7 +78,9 @@ class WeakClassifier(object):
             # Apply on data set
             for j, x in enumerate(data):
                 net = np.dot(weights, x)
-                if not is_correct(net, x[0]): errors.append(x)
+                if net <= self.bias:
+                    errors.append(x)
+                # if not is_correct(net, x[0]): errors.append(x)
             done = (len(errors) == 0)
 
             crit = Criterion.jr_func(self.bias, weights, errors)
@@ -104,7 +106,6 @@ class WeakClassifier(object):
     def test(self, samples: narray, labels: narray, **kwargs):
         correct = 0
         total = samples.shape[0]
-
         for (label, pred) in zip(labels, self.classify(samples)):
             if label > 0 and pred > 0: correct += 1
             if label <= 0 and pred <= 0: correct += 1
@@ -117,8 +118,8 @@ class WeakClassifier(object):
     def iter_classify(self, data: narray, **kwargs):
         for x in data:
             net = np.dot(self.weights[1:].T, x) + self.weights[0]
-            yield (-1 if net <= 0 else 1)
-
+            yield (-1 if net <= self.bias else 1)
+            # yield (-1 if net <= 0 else 1)
 
 class AdaBoost(object):
     def __init__(self, labels: tuple = None, size: int = 10, silent: bool = False, **kwargs):
@@ -162,8 +163,9 @@ class AdaBoost(object):
             weak = WeakClassifier(set_data, name="WC%i" % k, silent=self.silent)
 
             # Get training error of Ck
-            testing_samples = sample_from(set_data, distro)
-            hk = np.array(weak.classify(testing_samples[:, 1:]))
+            testing_samples = set_data
+            # testing_samples = sample_from(set_data, distro)
+            hk = np.array(weak.classify(np.array([x[0] * x[1:] for x in testing_samples])))
             wrong = np.sum(0 if is_correct(h, y) else 1 for (h, y) in zip(hk, testing_samples[:, 0]))
 
             # Get indices for testing samples
@@ -174,9 +176,13 @@ class AdaBoost(object):
                     consolidated.append((i, h, y))
 
             # Update distribution
+            err = wrong / testing_samples.shape[0]
             err2 = np.sum([distro[i] * np.exp(-y[0] * h) for i, h, y in consolidated])
-            err = err2
-            alpha = 0.5 * np.log((1 - err) / err) if err != 0 else 0
+            # err = err2
+            # if np.isclose(err, 0): err = 1e-6
+            # coeff = ((1 - err) / err)
+            # alpha = 0 if coeff == 0 else 0.5 * np.log(coeff)
+            alpha = 0.5 * np.log((1-err2)/err2)
 
             # Update distribution
             for i, h, y in consolidated:
@@ -197,7 +203,8 @@ class AdaBoost(object):
         filtered = np.array([[label] + x.tolist() for (label, x) in zip(labels, samples) if label in self.label_set])
         correct = 0
         total = filtered.shape[0]
-        for (label, pred) in zip(filtered[:, 0], self.classify(filtered[:, 1:])):
+        for (label, h) in zip(filtered[:, 0], self.classify(filtered[:, 1:])):
+            pred = self.label_set[0] if h > 0 else self.label_set[1]
             if label > 0 and pred > 0: correct += 1
             if label <= 0 and pred <= 0: correct += 1
         acc = 100 * (correct / total)
@@ -210,7 +217,7 @@ class AdaBoost(object):
         wc_hk = np.array([wc.classify(data) for wc in self.classifiers])
         for hk in wc_hk.T:
             net = np.dot(self.weights, hk)
-            yield -1 if net <= 0 else 1
+            yield 1 if net > 0 else -1
 
     def __str__(self):
         return "AdaBoost[%i,%i]" % self.label_set
@@ -266,7 +273,7 @@ class MulticlassAdaBoost(Classifier):
             yield Counter(pred).most_common(1)[0][0]
 
 
-def sample_from(data, weights: narray, min_size=5, cap=100000) -> narray:
+def sample_from(data, weights: narray, min_size=1, cap=100000) -> narray:
     min_size = max(min_size, 1)
     vals, choices = [], []
     attempt = 0
@@ -283,19 +290,19 @@ def sample_from(data, weights: narray, min_size=5, cap=100000) -> narray:
 
 
 def run(train_data: narray, test_data: narray, ada_size: int = 10):
-    # mc = MulticlassAdaBoost(size=ada_size, silenceChildren=True)
-    # mc.train(train_data[:, 1:], train_data[:, 0])
-    # mc.test(test_data[:, 1:], test_data[:, 0])
-    # return mc
+    mc = MulticlassAdaBoost(size=ada_size, silenceChildren=False)
+    mc.train(train_data[:, 1:], train_data[:, 0])
+    mc.test(test_data[:, 1:], test_data[:, 0])
+    return mc
 
-    result = []
-    for lset in [(8, 9), (1, 2), (1, 3), (2, 3)]:
-        ada = AdaBoost(lset, ada_size)
-        ada.train(train_data[:, 1:], train_data[:, 0], label_set=lset)
-        ada.test(test_data[:, 1:], test_data[:, 0])
-        exit()
-        result.append(ada)
-    return result
+    # result = []
+    # for lset in [(8, 9), (1, 2), (1, 3), (2, 3)]:
+    #     ada = AdaBoost(lset, ada_size)
+    #     ada.train(train_data[:, 1:], train_data[:, 0], label_set=lset)
+    #     ada.test(test_data[:, 1:], test_data[:, 0])
+    #     exit()
+    #     result.append(ada)
+    # return result
 
 
 def run_individual(train_data: narray, test_data: narray, ada_size: int = 10):
