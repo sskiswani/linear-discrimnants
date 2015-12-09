@@ -1,0 +1,15 @@
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Add plots for training error}{2}{section*.3}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ isn't this one wrong? Use the one from adaboost.WeakClassifier}{2}{section*.4}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Multiclass: OvO}{5}{section*.7}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Multiclass: Results}{5}{section*.9}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ get a plot here}{6}{section*.11}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Multiclass: UCI Wine results for One-Against-the-Other}{6}{section*.12}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ USPS Handwritten One-Against-the-Rest Results}{6}{section*.14}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Multiclass: USPS Digits results for One-Against-the-Other}{7}{section*.15}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ better writeup here}{8}{section*.16}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ AdaBoost Results}{8}{section*.18}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ anything to add here? (e.g. why multiclass is garbage)}{8}{section*.19}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ should probably explain why multiclass is garbage here}{8}{section*.20}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Support vector machines}{10}{section*.21}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Kernel method for linear discriminant functions}{10}{section*.22}
+\contentsline {todo}{\color@fb@x {}{black}{}{orange}{\leavevmode {\color {orange}o}}\ Multiple-class linear machines and multiple-class boosting}{10}{section*.23}
