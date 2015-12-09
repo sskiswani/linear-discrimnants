@@ -49,14 +49,18 @@ class Criterion(str, Enum):
 
 
 class WeakClassifier(object):
+    logged = False
     def __init__(self, data: narray, bias=15.0, rate: LearnRateType = None, name: str = None, silent: bool = False,
                  **kwargs):
         self.name = get(name, "WeakClassifier")
         self.criterion = Criterion.Jr
         self.bias = bias
-        self.learn_rate = get(rate, lambda k: 0.03)
+        lrate = 0.03
+        self.learn_rate = get(rate, lambda k: lrate)
         self.silent = silent
-
+        if not WeakClassifier.logged:
+            WeakClassifier.logged = True
+            print('rate: ', lrate, ' bias: ', bias)
         self.weights = self.batch_relaxation(data, **kwargs)
 
     def log(self, msg):
