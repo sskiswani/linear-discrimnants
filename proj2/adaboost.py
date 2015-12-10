@@ -5,9 +5,7 @@ from collections import Counter
 from enum import Enum
 from itertools import combinations
 from time import time
-
 import numpy as np
-
 from .core import Classifier
 from .util import narray, get, count_trials
 
@@ -50,12 +48,13 @@ class Criterion(str, Enum):
 
 class WeakClassifier(object):
     logged = False
-    def __init__(self, data: narray, bias=15.0, rate: LearnRateType = None, name: str = None, silent: bool = False,
+
+    def __init__(self, data: narray, bias=3, rate: LearnRateType = None, name: str = None, silent: bool = False,
                  **kwargs):
         self.name = get(name, "WeakClassifier")
         self.criterion = Criterion.Jr
         self.bias = bias
-        lrate = 0.03
+        lrate = 0.3
         self.learn_rate = get(rate, lambda k: lrate)
         self.silent = silent
         if not WeakClassifier.logged:
@@ -68,7 +67,6 @@ class WeakClassifier(object):
         logger.info(msg)
 
     def batch_relaxation(self, data: narray, **kwargs) -> narray:
-        is_correct = lambda h, l: (h > self.bias and l > 0) or (h < self.bias and l <= 0)
         max_trials = kwargs.get('max_trials', 100000)
 
         (n, features) = data.shape
@@ -82,16 +80,14 @@ class WeakClassifier(object):
             # Apply on data set
             for j, x in enumerate(data):
                 net = np.dot(weights, x)
-                if net <= self.bias:
-                    errors.append(x)
-                # if not is_correct(net, x[0]): errors.append(x)
+                if net <= self.bias: errors.append(x)
             done = (len(errors) == 0)
 
             crit = Criterion.jr_func(self.bias, weights, errors)
             done = done or np.isclose(crit, 0)
 
             if (numTrials % 5000) == 0 or numTrials == 1 or done:
-                self.log("\tT%i -- errors: %i crit: %f" % (numTrials, len(errors), crit))
+                self.log("\tT%i -- errors: %i / %i crit: %f" % (numTrials, len(errors), data.shape[0], crit))
 
             # Calculate the update
             update = 0
@@ -99,6 +95,9 @@ class WeakClassifier(object):
                 top = (self.bias - np.dot(weights.T, y))
                 bot = np.linalg.norm(y) ** 2
                 update += np.dot(top / bot, y)
+            if(np.any(np.abs(update) > 1e20)):
+                self.log("Terminating due to infinity -- errors: %i / %i crit: %f" % (len(errors), data.shape[0], crit))
+                break
             weights += self.learn_rate(k) * update
 
             if done or numTrials > max_trials:
@@ -120,10 +119,16 @@ class WeakClassifier(object):
         return list(self.iter_classify(data))
 
     def iter_classify(self, data: narray, **kwargs):
+        if len(data.shape) == 1:
+            net = np.dot(self.weights[1:].T, data) + self.weights[0]
+            yield (-1 if net <= self.bias else 1)
+            return
+
         for x in data:
             net = np.dot(self.weights[1:].T, x) + self.weights[0]
             yield (-1 if net <= self.bias else 1)
             # yield (-1 if net <= 0 else 1)
+
 
 class AdaBoost(object):
     def __init__(self, labels: tuple = None, size: int = 10, silent: bool = False, **kwargs):
@@ -164,29 +169,32 @@ class AdaBoost(object):
         for k in range(self.size):
             # Train weak leaner Ck
             training_samples = sample_from(set_data, distro)
-            weak = WeakClassifier(set_data, name="WC%i" % k, silent=self.silent)
+            weak = WeakClassifier(training_samples, name="WC%i" % k, silent=self.silent)
 
             # Get training error of Ck
-            # testing_samples = set_data
-            testing_samples = sample_from(set_data, distro)
+            testing_samples = set_data
+            # testing_samples = sample_from(set_data, distro)
             hk = np.array(weak.classify(np.array([x[0] * x[1:] for x in testing_samples])))
             wrong = np.sum(0 if is_correct(h, y) else 1 for (h, y) in zip(hk, testing_samples[:, 0]))
 
             # Get indices for testing samples
             consolidated = []
+            others = []
             for h, y in zip(hk, testing_samples):
                 for i, x in enumerate(set_data):
-                    if not np.all(x == y): continue
-                    consolidated.append((i, h, y))
+                    if not np.all(x == y):
+                        others.append(i)
+                    else:
+                        consolidated.append((i, h, y))
 
             # Update distribution
             err = wrong / testing_samples.shape[0]
             err2 = np.sum([distro[i] * np.exp(-y[0] * h) for i, h, y in consolidated])
+            err2 += np.sum([distro[i] for i in others])
             # err = err2
-            # if np.isclose(err, 0): err = 1e-6
-            # coeff = ((1 - err) / err)
-            # alpha = 0 if coeff == 0 else 0.5 * np.log(coeff)
-            alpha = 0.5 * np.log((1-err2)/err2)
+            # alpha = 0.5 * np.log((1-err2)/err2)
+            # err = err2
+            alpha = 0.5 * np.log(max((1 - err), 1e-30) / max(err, 1e-30))
 
             # Update distribution
             for i, h, y in consolidated:
@@ -194,9 +202,10 @@ class AdaBoost(object):
 
             self.log(log_fmt % (k, training_samples.shape[0], testing_samples.shape[0], wrong, err, err2, alpha))
 
-            if not np.isclose(np.sum(distro), 1.):
+            if not np.isclose(distro.sum(),1.):
                 distro /= np.sum(distro)
-
+            if not np.isclose(distro.sum(),1.):
+                print(distro, distro.sum())
             weights.append(alpha)
             self.classifiers.append(weak)
 
@@ -218,9 +227,12 @@ class AdaBoost(object):
         return list(self.iter_classify(data))
 
     def iter_classify(self, data: narray, **kwargs):
+        if len(data.shape) == 1: data = data.reshape(1, data.shape[0])
         wc_hk = np.array([wc.classify(data) for wc in self.classifiers])
+
         for hk in wc_hk.T:
             net = np.dot(self.weights, hk)
+            print(self, net, '\n\t', self.weights, '\n\t',hk)
             yield 1 if net > 0 else -1
 
     def __str__(self):
@@ -228,7 +240,7 @@ class AdaBoost(object):
 
 
 class MulticlassAdaBoost(Classifier):
-    def __init__(self, size: int = 10, **kwargs):
+    def __init__(self, size: int = 5, **kwargs):
         super().__init__(**kwargs)
         self.silenceChildren = kwargs.get('silenceChildren', True)
         self.size = size
@@ -251,13 +263,29 @@ class MulticlassAdaBoost(Classifier):
         # Test ensemble
         correct = 0
         total = samples.shape[0]
-
-        for label, pred in zip(labels, self.classify(samples)):
-            if label == pred:
-                correct += 1
+        mapping = {}
+        for label, x in zip(labels, samples):
+            predictions = []
+            for lset, ada in self.classifiers.items():
+                pred = ada.classify(x)
+                predictions.append((lset, pred[0], lset[0] if pred[0] > 0 else lset[1]))
+            votes = Counter([p for _,_,p in predictions])
+            guess = votes.most_common()[0][0]
+            if guess == label: correct += 1
+            if label not in mapping.keys():
+                mapping[label] = [[g for _,_,g in predictions]]
+            else: mapping[label].append([g for _,_,g in predictions])
+            print(label, ' pred: ', guess,  '\tvals: ', [(l,s,p) for l,s,p in predictions])
+        from pprint import pprint
+        pprint(mapping)
+        # for label, pred in zip(labels, self.classify(samples, labels=labels)):
+        #     print(label, ' vs ', pred)
+        #     if label == pred:
+        #         correct += 1
 
         acc = 100 * (correct / total)
         logger.info("MCAdaBoost: %i correct of %i (%.2f%%)" % (correct, total, acc))
+        exit()
 
         # Test individuals
         for lset in self.sets:
@@ -270,14 +298,14 @@ class MulticlassAdaBoost(Classifier):
 
     def iter_classify(self, data: narray, **kwargs):
         predictions = np.array(
-                [[lset[0 if p > 0 else 1] for p in ada.classify(data)]
-                 for lset, ada in self.classifiers.items()])
+            [[lset[0 if p > 0 else 1] for p in ada.classify(data)]
+             for lset, ada in self.classifiers.items()])
 
         for pred in predictions.T:
             yield Counter(pred).most_common(1)[0][0]
 
 
-def sample_from(data, weights: narray, min_size=1, cap=100000) -> narray:
+def sample_from(data, weights: narray, min_size=2, cap=100000) -> narray:
     min_size = max(min_size, 1)
     vals, choices = [], []
     attempt = 0
@@ -293,7 +321,7 @@ def sample_from(data, weights: narray, min_size=1, cap=100000) -> narray:
     return np.array(vals)
 
 
-def run(train_data: narray, test_data: narray, ada_size: int = 10):
+def run(train_data: narray, test_data: narray, ada_size: int = 20):
     mc = MulticlassAdaBoost(size=ada_size, silenceChildren=False)
     mc.train(train_data[:, 1:], train_data[:, 0])
     mc.test(test_data[:, 1:], test_data[:, 0])
